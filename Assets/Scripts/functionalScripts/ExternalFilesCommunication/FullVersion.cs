@@ -52,6 +52,25 @@ public class FullVersion : Singleton<FullVersion>
     }
 
     /// <summary>
+    /// Whether the user allows appodeal to collect ad data or not. If not the ads should still be played (at least on newer 
+    /// versions), but without personalization. [Retrieved from/saved to an external file.]
+    /// </summary>
+    public AdDataCollectionPermitted CollectionOfDataConsent
+    {
+        get
+        {
+            FullVersionData data = RetrieveFullVersionDataFromFile();
+            return data.CollectionOfDataConsent;
+        }
+        set
+        {
+            FullVersionData data = RetrieveFullVersionDataFromFile();
+            data.CollectionOfDataConsent = value;
+            SaveFullVersionDataToFile(data);
+        }
+    }
+
+    /// <summary>
     /// Counter that counts how many blocks where collected since the last ad was shown. Determines when the next ad should be played.
     /// See 'AdManager' for criteria how often ads are played. [Retrieved from/saved to an external file.]
     /// </summary>
@@ -225,6 +244,12 @@ public class FullVersionData
     public GameFirstLoaded IsGameFirstLoaded
     { get; set; }
 
+    /// <summary>
+    /// Whether the user allows appodeal to collect ad data or not. If not the ads should still be played (at least on newer 
+    /// versions), but without personalization.
+    /// </summary>
+    public AdDataCollectionPermitted CollectionOfDataConsent
+    { get; set; }
 
     /// <summary>
     /// Counter that counts how many blocks where collected since the last ad was shown. Determines when the next ad should be played.

@@ -41,8 +41,8 @@ public class GraphicsSettingsController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        timeUntilClosureOfInfoPanel = StaticValues.TimeUntilClosureOfInfoPanel;
-        fadingTimeInfoPanel = StaticValues.FadingTimeInfoPanel;
+        timeUntilClosureOfInfoPanel = StaticValues.timeUntilClosureOfInfoPanel;
+        fadingTimeInfoPanel = StaticValues.fadingTimeInfoPanel;
         defaultSizeTextRect = new Vector2(textRect.sizeDelta.x, textRect.sizeDelta.y);
         LoadShowPixelsToggleState(pixelModeToggle);
         LoadSnakeHeadMarkedToggleState(snakeHeadMarkedToggle);
@@ -155,7 +155,7 @@ public class GraphicsSettingsController : MonoBehaviour
 
     /// <summary>
     /// Toggles the info panel (in)active. If it is toggled active, it will start fading after 'timeUntilClosureOfPanel' and it'll fade within
-    /// 'FadingTimeInfoPanel'.
+    /// 'fadingTimeInfoPanel'.
     /// Note: When the info panel is set active, all info buttons are set inactive (they're reactivated when the info panel is closed).
     /// </summary>
     /// <param name="newActivityStatus">The new activity status of the info panel.</param>
@@ -164,8 +164,8 @@ public class GraphicsSettingsController : MonoBehaviour
         blocker.SetActive(newActivityStatus);
         infoPanel.SetActive(newActivityStatus);
         ToggleInfoButtonsActive(!newActivityStatus);
-        //when the info panel is opened, it will automatically close again after 'TimeUntilClosureOfInfoPanel', 
-        //fading within 'FadingTimeInfoPanel'
+        //when the info panel is opened, it will automatically close again after 'timeUntilClosureOfInfoPanel', 
+        //fading within 'fadingTimeInfoPanel'
         //elsewhise the execution of the coroutine is cancelled
         if (newActivityStatus)
             CoroutinesSingleton.Instance.CloseUIObjectAutomatically(infoPanel, timeUntilClosureOfInfoPanel, fadingTimeInfoPanel, infoButtons, blocker);

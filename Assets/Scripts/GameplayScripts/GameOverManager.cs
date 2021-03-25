@@ -138,8 +138,21 @@ public class GameOverManager : MonoBehaviour
         vibrationOn = currentData.VibrationsOn;
         soundOn = currentData.SoundOn;
 
-        PlayGameOverSound(soundOn, won);
-        Vibrate(vibrationOn, won);
+        //ads are shown if they weren't removed (by purchasing the full version) 
+        //conditions: since the last ad was shown at least 40 blocks were collected, the ad is loaded, 
+        //the game wasn't won (collecting 100% of all blocks)
+        if (FullVersion.Instance.IsFullVersionUnlocked == FullVersionUnlocked.notUnlocked)
+        {
+            if (soundOn || vibrationOn)
+                ShowAds(won, playGameOverSoundDelegate, vibrateOnLoseDelegate);
+            else
+                ShowAds(won);
+        }
+        else
+        {
+            PlayGameOverSound(soundOn, won);
+            Vibrate(vibrationOn, won);
+        }
 
         gameOverCanvas.GetComponent<Canvas>().enabled = true;
         SetNewHighscore();
@@ -178,6 +191,31 @@ public class GameOverManager : MonoBehaviour
             else
                 Vibration.Vibrate(1000);
         }
+    }
+
+    /// <summary>
+    /// Shows either no ad, a banner ad, an interstitial video or a non-skippable video depending on the score of the last game.
+    /// </summary>
+    /// <param name="gameWon">Whether the game was won or not.</param>
+    private void ShowAds(bool gameWon)
+    {
+        FullVersion.Instance.ShowAdCounter += currentScore;
+        print(FullVersion.Instance.ShowAdCounter);
+        AdManager.Instance.ShowVideoAdOnLose(gameWon);
+    }
+
+    /// <summary>
+    /// Shows either no ad, a banner ad, an interstitial video or a non-skippable video depending on the score of the last game.
+    /// If no ad is shown (i.e. because the game was won or if no ad should be shown yet), a game over sound is played.
+    /// </summary>
+    /// <param name="gameWon">Whether the game was won or not.</param>
+    /// <param name="playGameOverSound">A method which plays a game over sound if no ad will be shown.</param>
+    /// ///<param name="playVibration">A method which makes the device vibrate if no ad is shown.</param>
+    private void ShowAds(bool gameWon, SoundMethod playGameOverSound, SoundMethod playVibration)
+    {
+        FullVersion.Instance.ShowAdCounter += currentScore;
+        //print(FullVersion.Instance.ShowAdCounter);
+        AdManager.Instance.ShowVideoAdOnLose(gameWon, playGameOverSound, playVibration);
     }
 
     /// <summary>

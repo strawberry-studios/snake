@@ -44,8 +44,8 @@ public class MoreOptionsController1 : MonoBehaviour
     {
         iAPsEnabled = StaticValues.IAPsEnabled;
         soundController = GameObject.FindGameObjectWithTag("SoundController");
-        timeUntilClosureOfInfoPanel = StaticValues.TimeUntilClosureOfInfoPanel;
-        fadingTimeInfoPanel = StaticValues.FadingTimeInfoPanel;
+        timeUntilClosureOfInfoPanel = StaticValues.timeUntilClosureOfInfoPanel;
+        fadingTimeInfoPanel = StaticValues.fadingTimeInfoPanel;
         LoadSoundsToggleState(soundToggle);
         LoadVibrationToggleState(vibrationToggle);
         infoPanel.SetActive(false);
@@ -117,6 +117,24 @@ public class MoreOptionsController1 : MonoBehaviour
     }
 
     /// <summary>
+    /// Opens the privacy settings, if the user has already selected an ads-personalization option.
+    /// Elsewhise the panel where the user can select one of the options is opened.
+    /// </summary>
+    public void OpenPrivacySettings()
+    {
+        if(FullVersion.Instance.CollectionOfDataConsent != AdDataCollectionPermitted.notSet)
+            SceneManager.LoadScene("PrivacySettings");
+        else
+        {
+            GameObject adsPersonalization = GameObject.FindGameObjectWithTag("PersonalizedAdsConsent");
+            if (adsPersonalization != null)
+                adsPersonalization.GetComponent<AdsPersonalizationConsent>().TogglePanelsActive(true);
+            else
+                Debug.Log("The ads personalization panel should be opened. But nothing happens. #Debug");
+        }
+    }
+
+    /// <summary>
     /// Opens a panel where the player can decide whether they really want to exit the game.
     /// </summary>
     public void ExitGame()
@@ -176,7 +194,7 @@ public class MoreOptionsController1 : MonoBehaviour
 
     /// <summary>
     /// Toggles the info panel (in)active. If it is toggled active, it will start fading after 'timeUntilClosureOfPanel' and it'll fade within
-    /// 'FadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
+    /// 'fadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
     /// Note: When the info panel is set active, all info buttons are set inactive (they're reactivated when the info panel is closed).
     /// </summary>
     /// <param name="newActivityStatus">The new activity status of the info panel.</param>
@@ -197,7 +215,7 @@ public class MoreOptionsController1 : MonoBehaviour
 
     ///// <summary>
     ///// Toggles the info panel (in)active. If it is toggled active, it will start fading after 'timeUntilClosureOfPanel' and it'll fade within
-    ///// 'FadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
+    ///// 'fadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
     ///// Note: When the info panel is set active, all info buttons are set inactive (they're reactivated when the info panel is closed).
     ///// The full version button is activated if the info panel is set active and 'showFullVersionButton' is set to true.
     ///// </summary>
@@ -212,7 +230,7 @@ public class MoreOptionsController1 : MonoBehaviour
     //    {
     //        if (fullVersionButton.activeInHierarchy != showFullVersionButton)
     //            fullVersionButton.SetActive(showFullVersionButton);
-    //        CoroutinesSingleton.Instance.CloseUIObjectAutomatically(infoPanel, TimeUntilClosureOfInfoPanel, FadingTimeInfoPanel, infoButtons, blocker);
+    //        CoroutinesSingleton.Instance.CloseUIObjectAutomatically(infoPanel, timeUntilClosureOfInfoPanel, fadingTimeInfoPanel, infoButtons, blocker);
     //    }
     //    else
     //        CoroutinesSingleton.Instance.StopClosingUIObjectAutomatically();

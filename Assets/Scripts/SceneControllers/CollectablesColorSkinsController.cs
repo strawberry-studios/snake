@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using AppodealAds.Unity.Api;
+using AppodealAds.Unity.Common;
 
 /// <summary>
 /// This class provides methods which are needed for the UI where the users can set the 'collectables color'.
 /// It also laods the current settings (in the scene).
 /// </summary>
-public class CollectablesColorSkinsController : MonoBehaviour
+public class CollectablesColorSkinsController : MonoBehaviour, IRewardedVideoAdListener
 {
     /// <summary>
     /// References all Buttons in the scene that represent one color the snake can have.
@@ -228,6 +230,10 @@ public class CollectablesColorSkinsController : MonoBehaviour
     /// </summary>
     public GameObject unlockFullVersionButton;
     /// <summary>
+    /// A button which is only activated if IAPs are not supported. If pressed, an ad is played, afterwards a color is unlocked.
+    /// </summary>
+    public GameObject watchAdToUnlockColorButton;
+    /// <summary>
     /// Transparent button covering the whole screen which 'blocks' any action while the info panel is opened. If pressed the info panel is closed.
     /// </summary>
     public GameObject blocker;
@@ -249,6 +255,8 @@ public class CollectablesColorSkinsController : MonoBehaviour
     private void Awake()
     {
         SceneManager.sceneUnloaded += OnSceneExit;
+
+        Appodeal.setRewardedVideoCallbacks(this);
     }
 
     /// <summary>
@@ -272,8 +280,8 @@ public class CollectablesColorSkinsController : MonoBehaviour
             colorsUnpixeled.transform.localPosition -= new Vector3(0, 20, 0);
         }
 
-        timeUntilClosureOfInfoPanel = StaticValues.TimeUntilClosureOfInfoPanel;
-        fadingTimeInfoPanel = StaticValues.FadingTimeInfoPanel;
+        timeUntilClosureOfInfoPanel = StaticValues.timeUntilClosureOfInfoPanel;
+        fadingTimeInfoPanel = StaticValues.fadingTimeInfoPanel;
         pixelsOn = DataSaver.Instance.GetShowPixels();
         infoPanel.SetActive(false);
         locks.SetPositionOfLockObjects(colors.orange.transform, colors.darkGreen.transform, colors.faintRed.transform);
@@ -359,11 +367,13 @@ public class CollectablesColorSkinsController : MonoBehaviour
     /// After 10 seconds it automatically closes again.
     /// </summary>
     /// <param name="showFullVersionButton">If true a button which links this scene with the full version scene is activated.</param>
-    public void OpenInfoPanel(bool showFullVersionButton)
+    /// <param name="showWatchAdToUnlockButton">If true a button is set active. If clicked an ad will be played and the a color unlocked.</param>
+    public void OpenInfoPanel(bool showFullVersionButton, bool showWatchAdToUnlockButton)
     {
         blocker.SetActive(true);
         infoPanel.SetActive(true);
         unlockFullVersionButton.SetActive(showFullVersionButton);
+        watchAdToUnlockColorButton.SetActive(showWatchAdToUnlockButton);
         CoroutinesSingleton.Instance.CloseUIObjectAutomatically(infoPanel, timeUntilClosureOfInfoPanel, fadingTimeInfoPanel, null, blocker);
     }
 
@@ -373,7 +383,7 @@ public class CollectablesColorSkinsController : MonoBehaviour
     /// <param name="bug">The bug which should be reported.</param>
     void ShowBugReport(string bug)
     {
-        OpenInfoPanel(false);
+        OpenInfoPanel(false, false);
         infoPanelText.text = bug;
     }
 
@@ -393,29 +403,27 @@ public class CollectablesColorSkinsController : MonoBehaviour
     //to be attached to buttons:
 
     /// <summary>
+    /// Plays and ad and unlock a color afterwards. Only needed if IAPs are not supported.
+    /// </summary>
+    public void WatchAdToUnlockColor()
+    {
+        CloseInfoPanel();
+        MethodWithOneParameter showBugReport = ShowBugReport;
+        AdManager.Instance.ShowRewardedAd(showBugReport, "The ad couldn't be loaded. \nCheck your internet connection and try again later.");
+    }
+
+    /// <summary>
     /// Shows a message which informs the player that they need to unlock the full version if they want to select a certain locked color.
     /// </summary>
     /// <param name="indexOfColor">The index of the color that is currently locked and which can be unlocked by watching an ad. </param>
     public void ShowCustomColorLockedMessage(int indexOfColor)
     {
-        OpenInfoPanel(iAPsEnabled);
+        OpenInfoPanel(iAPsEnabled, !iAPsEnabled);
         if (iAPsEnabled)
             infoPanelText.text = "YOU NEED TO UNLOCK THE FULL VERSION TO SELECT THIS COLOR.";
         else
         {
-            switch(indexOfColor)
-            {
-                case 1:
-                    infoPanelText.text = "THIS COLOR WASN'T UNLOCKED YET. \nSCORE AT LEAST 40% WITH MEDIUM DIFFICULTY TO UNLOCK IT!";
-                    break;
-                case 2:
-                    infoPanelText.text = "THIS COLOR WASN'T UNLOCKED YET. \nSCORE AT LEAST 10% WITH ULTIMATE DIFFICULTY TO UNLOCK IT!";
-                    break;
-                case 3:
-                    infoPanelText.text = "THIS COLOR WASN'T UNLOCKED YET. \nSCORE 100% WITH ANY DIFFICULTY TO UNLOCK IT!";
-                    break;
-            }
-
+            infoPanelText.text = "THIS COLOR WASN'T UNLOCKED YET. WATCH AN AD TO UNLOCK IT.";
             indexOfColorToBeUnlocked = indexOfColor;
         }
     }
@@ -425,7 +433,7 @@ public class CollectablesColorSkinsController : MonoBehaviour
     /// </summary>
     void ShowCustomizingOptionLockedMessage()
     {
-        OpenInfoPanel(true);
+        OpenInfoPanel(true, false);
         infoPanelText.text = "YOU NEED TO UNLOCK THE FULL VERSION TO CUSTOMIZE YOUR OWN COLORS.";
     }
 
@@ -434,7 +442,7 @@ public class CollectablesColorSkinsController : MonoBehaviour
     /// </summary>
     public void ShowColorAlreadySelectedMessage()
     {
-        OpenInfoPanel(false);
+        OpenInfoPanel(false, false);
         infoPanelText.text = "YOU CAN'T SELECT THIS COLOR. IT WAS ALREADY SET AS SNAKE COLOR.";
     }
 

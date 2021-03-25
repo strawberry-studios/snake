@@ -70,8 +70,8 @@ public class PreferencesController : MonoBehaviour
     {
         iAPsEnabled = StaticValues.IAPsEnabled;
         soundController = GameObject.FindGameObjectWithTag("SoundController");
-        timeUntilClosureOfInfoPanel = StaticValues.TimeUntilClosureOfInfoPanel;
-        fadingTimeInfoPanel = StaticValues.FadingTimeInfoPanel;
+        timeUntilClosureOfInfoPanel = StaticValues.timeUntilClosureOfInfoPanel;
+        fadingTimeInfoPanel = StaticValues.fadingTimeInfoPanel;
         LoadSoundsToggleState(soundToggle);
         LoadVibrationToggleState(vibrationToggle);
         originalInfoSizeY = infoRect.sizeDelta.y;
@@ -237,7 +237,7 @@ public class PreferencesController : MonoBehaviour
 
     /// <summary>
     /// Toggles the info panel (in)active. If it is toggled active, it will start fading after 'timeUntilClosureOfPanel' and it'll fade within
-    /// 'FadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
+    /// 'fadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
     /// Note: When the info panel is set active, all info buttons are set inactive (they're reactivated when the info panel is closed).
     /// </summary>
     /// <param name="newActivityStatus">The new activity status of the info panel.</param>
@@ -258,7 +258,7 @@ public class PreferencesController : MonoBehaviour
 
     ///// <summary>
     ///// Toggles the info panel (in)active. If it is toggled active, it will start fading after 'timeUntilClosureOfPanel' and it'll fade within
-    ///// 'FadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
+    ///// 'fadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
     ///// Note: When the info panel is set active, all info buttons are set inactive (they're reactivated when the info panel is closed).
     ///// The full version button is activated if the info panel is set active and 'showFullVersionButton' is set to true.
     ///// </summary>
@@ -273,7 +273,7 @@ public class PreferencesController : MonoBehaviour
     //    {
     //        if(fullVersionButton.activeInHierarchy != showFullVersionButton)
     //            fullVersionButton.SetActive(showFullVersionButton);
-    //        CoroutinesSingleton.Instance.CloseUIObjectAutomatically(infoPanel, TimeUntilClosureOfInfoPanel, FadingTimeInfoPanel, infoButtons, blocker);
+    //        CoroutinesSingleton.Instance.CloseUIObjectAutomatically(infoPanel, timeUntilClosureOfInfoPanel, fadingTimeInfoPanel, infoButtons, blocker);
     //    }
     //    else
     //        CoroutinesSingleton.Instance.StopClosingUIObjectAutomatically();

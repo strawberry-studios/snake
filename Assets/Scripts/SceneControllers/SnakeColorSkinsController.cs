@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using AppodealAds.Unity.Api;
+using AppodealAds.Unity.Common;
 
 /// <summary>
 /// A simple delegate that takes no parameters.
@@ -162,7 +164,7 @@ public static class IntegerExtensions
 /// This class provides methods which are needed for the UI where the users can set the 'snake color'.
 /// It also laods the current settings (in the scene).
 /// </summary>
-public class SnakeColorSkinsController : MonoBehaviour
+public class SnakeColorSkinsController : MonoBehaviour, IRewardedVideoAdListener
 {
     /// <summary>
     /// References all Buttons in the scene that represent one color the snake can have.
@@ -312,40 +314,6 @@ public class SnakeColorSkinsController : MonoBehaviour
         public bool IAPsEnabled { get; set; }
 
         /// <summary>
-        /// Unlock all of the currently locked colors if the corresponding conditions were met. (only if IAPs are toggled off)
-        /// </summary>
-        public void UnlockLocks()
-        {
-            if(!IAPsEnabled)
-            {
-                HighScoresData data = HighScores.Instance.RetrieveHighScoresDataFromFile();
-                bool[] lockedStates = FullVersion.Instance.CustomColorUnlocked;
-
-                if (!lockedStates[0])
-                {
-                    if (data.GetHighScores(Difficulty.Medium)[0] >= 400)
-                        lockedStates[0] = true;
-                }
-
-                if (!lockedStates[1])
-                {
-                    if (data.GetHighScores(Difficulty.Ultimate)[0] >= 100)
-                        lockedStates[1] = true;
-                }
-
-                if (!lockedStates[2])
-                {
-                    if (data.GetHighScores(Difficulty.VeryEasy)[0] >= 1000 || data.GetHighScores(Difficulty.Easy)[0] >= 1000 ||
-                        data.GetHighScores(Difficulty.Medium)[0] >= 1000 || data.GetHighScores(Difficulty.Hard)[0] >= 1000 ||
-                        data.GetHighScores(Difficulty.VeryHard)[0] >= 1000 || data.GetHighScores(Difficulty.Ultimate)[0] >= 1000)
-                        lockedStates[2] = true;
-                }
-
-                FullVersion.Instance.CustomColorUnlocked = lockedStates;
-            }
-        }
-
-        /// <summary>
         /// If the full version wasn't unlocked yet, all of the lock objects are set active and their positions are set to those of the 
         /// passed transforms.
         /// </summary>
@@ -414,6 +382,10 @@ public class SnakeColorSkinsController : MonoBehaviour
     /// </summary>
     public GameObject unlockFullVersionButton;
     /// <summary>
+    /// A button which is only activated if IAPs are not supported. If pressed, an ad is played, afterwards a color is unlocked.
+    /// </summary>
+    public GameObject watchAdToUnlockColorButton;
+    /// <summary>
     /// Transparent button covering the whole screen which 'blocks' any action while the info panel is opened. If pressed the info panel is closed.
     /// </summary>
     public GameObject blocker;
@@ -435,6 +407,8 @@ public class SnakeColorSkinsController : MonoBehaviour
     private void Awake()
     {
         SceneManager.sceneUnloaded += OnSceneExit;
+
+        Appodeal.setRewardedVideoCallbacks(this);
     }
 
     /// <summary>
@@ -458,12 +432,11 @@ public class SnakeColorSkinsController : MonoBehaviour
             colorsUnpixeled.transform.localPosition -= new Vector3(0, 20, 0);
         }
 
-        timeUntilClosureOfInfoPanel = StaticValues.TimeUntilClosureOfInfoPanel;
-        fadingTimeInfoPanel = StaticValues.FadingTimeInfoPanel;
+        timeUntilClosureOfInfoPanel = StaticValues.timeUntilClosureOfInfoPanel;
+        fadingTimeInfoPanel = StaticValues.fadingTimeInfoPanel;
         pixelsOn = DataSaver.Instance.GetShowPixels();
         infoPanel.SetActive(false);
         blocker.SetActive(false);
-        locks.UnlockLocks();
         locks.SetPositionOfLockObjects(colors.orange.transform, colors.darkGreen.transform, colors.faintRed.transform) ;
         if (pixelsOn)
             pixeledColors.LoadCustomizedColors();
@@ -546,11 +519,13 @@ public class SnakeColorSkinsController : MonoBehaviour
     /// After 10 seconds it automatically closes again.
     /// </summary>
     /// <param name="showFullVersionButton">If true a button which links this scene with the full version scene is activated.</param>
-    public void OpenInfoPanel(bool showFullVersionButton)
+    /// <param name="showWatchAdToUnlockButton">If true a button is set active. If clicked an ad will be played and the a color unlocked.</param>
+    public void OpenInfoPanel(bool showFullVersionButton, bool showWatchAdToUnlockButton)
     {
         infoPanel.SetActive(true);
         blocker.SetActive(true);
         unlockFullVersionButton.SetActive(showFullVersionButton);
+        watchAdToUnlockColorButton.SetActive(showWatchAdToUnlockButton);
         CoroutinesSingleton.Instance.CloseUIObjectAutomatically(infoPanel, timeUntilClosureOfInfoPanel, fadingTimeInfoPanel, null, blocker);
         //StartCoroutine(CloseInfoPanelAutomatically(10000));
     }
@@ -561,7 +536,7 @@ public class SnakeColorSkinsController : MonoBehaviour
     /// <param name="bug">The bug which should be reported.</param>
     void ShowBugReport(string bug)
     {
-        OpenInfoPanel(false);
+        OpenInfoPanel(false, false);
         infoPanelText.text = bug;
     }
 
@@ -581,28 +556,27 @@ public class SnakeColorSkinsController : MonoBehaviour
     //to be attached to buttons:
 
     /// <summary>
+    /// Plays and ad and unlock a color afterwards. Only needed if IAPs are not supported.
+    /// </summary>
+    public void WatchAdToUnlockColor()
+    {
+        CloseInfoPanel();
+        MethodWithOneParameter showBugReport = ShowBugReport;
+        AdManager.Instance.ShowRewardedAd(showBugReport, "The ad couldn't be loaded. \nCheck your internet connection and try again later.");
+    }
+
+    /// <summary>
     /// Shows a message which informs the player that they need to unlock the full version if they want to select a certain locked color.
     /// </summary>
     /// <param name="indexOfColor">The index of the color that is currently locked and which can be unlocked by watching an ad. </param>
     public void ShowCustomColorLockedMessage(int indexOfColor)
     {
-        OpenInfoPanel(iAPsEnabled);
+        OpenInfoPanel(iAPsEnabled, !iAPsEnabled);
         if (iAPsEnabled)
             infoPanelText.text = "YOU NEED TO UNLOCK THE FULL VERSION TO SELECT THIS COLOR.";
         else
         {
-            switch (indexOfColor)
-            {
-                case 1:
-                    infoPanelText.text = "THIS COLOR WASN'T UNLOCKED YET. \nSCORE AT LEAST 40% WITH MEDIUM DIFFICULTY TO UNLOCK IT!";
-                    break;
-                case 2:
-                    infoPanelText.text = "THIS COLOR WASN'T UNLOCKED YET. \nSCORE AT LEAST 10% WITH ULTIMATE DIFFICULTY TO UNLOCK IT!";
-                    break;
-                case 3:
-                    infoPanelText.text = "THIS COLOR WASN'T UNLOCKED YET. \nSCORE 100% WITH ANY DIFFICULTY TO UNLOCK IT!";
-                    break;
-            }
+            infoPanelText.text = "THIS COLOR WASN'T UNLOCKED YET. WATCH AN AD TO UNLOCK IT.";
             indexOfColorToBeUnlocked = indexOfColor;
         }
     }
@@ -612,7 +586,7 @@ public class SnakeColorSkinsController : MonoBehaviour
     /// </summary>
     void ShowCustomizingOptionLockedMessage()
     {
-        OpenInfoPanel(true);
+        OpenInfoPanel(true, false);
         infoPanelText.text = "YOU NEED TO UNLOCK THE FULL VERSION TO CUSTOMIZE YOUR OWN COLORS.";
     }
 
@@ -621,7 +595,7 @@ public class SnakeColorSkinsController : MonoBehaviour
     /// </summary>
     public void ShowColorAlreadySelectedMessage()
     {
-        OpenInfoPanel(false);
+        OpenInfoPanel(false, false);
         infoPanelText.text = "YOU CAN'T SELECT THIS COLOR. IT WAS ALREADY SET AS APPLE COLOR.";
     }
 
@@ -677,64 +651,64 @@ public class SnakeColorSkinsController : MonoBehaviour
 
     //methods handling the reward after rewarded videos were shown:
 
-    //public void onRewardedVideoLoaded(bool isPrecache) { print("Video loaded"); } //Called when rewarded video was loaded (precache flag shows if the loaded ad is precache).
-    //public void onRewardedVideoFailedToLoad() { print("Video failed"); } // Called when rewarded video failed to load
-    //public void onRewardedVideoShown() { print("Video shown"); } // Called when rewarded video is shown
-    //public void onRewardedVideoClicked() { print("Video clicked"); } // Called when reward video is clicked
+    public void onRewardedVideoLoaded(bool isPrecache) { print("Video loaded"); } //Called when rewarded video was loaded (precache flag shows if the loaded ad is precache).
+    public void onRewardedVideoFailedToLoad() { print("Video failed"); } // Called when rewarded video failed to load
+    public void onRewardedVideoShown() { print("Video shown"); } // Called when rewarded video is shown
+    public void onRewardedVideoClicked() { print("Video clicked"); } // Called when reward video is clicked
 
 
-    ///// <summary>
-    ///// Called when rewarded video was loaded, but cannot be shown (internal network errors, placement settings, or incorrect creative)
-    ///// </summary>
-    //public void onRewardedVideoShowFailed()
-    //{
-    //    print("Video show failed");
-    //    ShowBugReport("The ad couldn't be played due to an internal error. \nPlease try again later.");
-    //} 
+    /// <summary>
+    /// Called when rewarded video was loaded, but cannot be shown (internal network errors, placement settings, or incorrect creative)
+    /// </summary>
+    public void onRewardedVideoShowFailed()
+    {
+        print("Video show failed");
+        ShowBugReport("The ad couldn't be played due to an internal error. \nPlease try again later.");
+    } 
 
-    ///// <summary>
-    ///// Called when rewarded video is closed.
-    ///// </summary>
-    ///// <param name="finished"></param>
-    //public void onRewardedVideoClosed(bool finished)
-    //{
-    //    print("Video closed");
-    //    //ShowBugReport("The video didn't finish. \nWatch the entire video to be rewarded.");
-    //}
+    /// <summary>
+    /// Called when rewarded video is closed.
+    /// </summary>
+    /// <param name="finished"></param>
+    public void onRewardedVideoClosed(bool finished)
+    {
+        print("Video closed");
+        //ShowBugReport("The video didn't finish. \nWatch the entire video to be rewarded.");
+    }
 
-    ///// <summary>
-    ///// Called when rewarded video is viewed until the end. Rewards the player.
-    ///// </summary>
-    ///// <param name="amount"></param>
-    ///// <param name="name"></param>
-    //public void onRewardedVideoFinished(double amount, string name)
-    //{
-    //    print("Reward: " + amount + " " + name);
+    /// <summary>
+    /// Called when rewarded video is viewed until the end. Rewards the player.
+    /// </summary>
+    /// <param name="amount"></param>
+    /// <param name="name"></param>
+    public void onRewardedVideoFinished(double amount, string name)
+    {
+        print("Reward: " + amount + " " + name);
 
-    //    FullVersionData currentData = FullVersion.Instance.RetrieveFullVersionDataFromFile();
-    //    currentData.CustomColorUnlocked[indexOfColorToBeUnlocked - 1] = true;
-    //    FullVersion.Instance.SaveFullVersionDataToFile(currentData);
+        FullVersionData currentData = FullVersion.Instance.RetrieveFullVersionDataFromFile();
+        currentData.CustomColorUnlocked[indexOfColorToBeUnlocked - 1] = true;
+        FullVersion.Instance.SaveFullVersionDataToFile(currentData);
 
-    //    switch (indexOfColorToBeUnlocked)
-    //    {
-    //        case 1:
-    //            locks.lock1.SetActive(false);
-    //            break;
-    //        case 2:
-    //            locks.lock2.SetActive(false);
-    //            break;
-    //        case 3:
-    //            locks.lock3.SetActive(false);
-    //            break;
-    //    }
-    //}
+        switch (indexOfColorToBeUnlocked)
+        {
+            case 1:
+                locks.lock1.SetActive(false);
+                break;
+            case 2:
+                locks.lock2.SetActive(false);
+                break;
+            case 3:
+                locks.lock3.SetActive(false);
+                break;
+        }
+    }
 
-    ///// <summary>
-    ///// Called when rewarded video is expired and can not be shown.
-    ///// </summary>
-    //public void onRewardedVideoExpired()
-    //{
-    //    print("Video expired");
-    //    ShowBugReport("The ad can currently not be shown due to an ad-network error. \nPlease try again later.");
-    //} 
+    /// <summary>
+    /// Called when rewarded video is expired and can not be shown.
+    /// </summary>
+    public void onRewardedVideoExpired()
+    {
+        print("Video expired");
+        ShowBugReport("The ad can currently not be shown due to an ad-network error. \nPlease try again later.");
+    } 
 }

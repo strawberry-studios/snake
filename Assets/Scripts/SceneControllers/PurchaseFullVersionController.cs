@@ -23,8 +23,8 @@ public class PurchaseFullVersionController : MonoBehaviour, IPurchase
     // Start is called before the first frame update
     void Start()
     {
-        timeUntilClosureOfInfoPanel = (int)(StaticValues.TimeUntilClosureOfInfoPanel * 1.5f);
-        fadingTimeInfoPanel = StaticValues.FadingTimeInfoPanel;
+        timeUntilClosureOfInfoPanel = (int)(StaticValues.timeUntilClosureOfInfoPanel * 1.5f);
+        fadingTimeInfoPanel = StaticValues.fadingTimeInfoPanel;
         infoPanel.SetActive(false);
         blocker.SetActive(false);
         StartCoroutine(IncreaseSize(priceText));
@@ -80,7 +80,7 @@ public class PurchaseFullVersionController : MonoBehaviour, IPurchase
 
     /// <summary>
     /// Toggles the info panel (in)active. If it is toggled active, it will start fading after 'timeUntilClosureOfPanel' and it'll fade within
-    /// 'FadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
+    /// 'fadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
     /// </summary>
     /// <param name="newActivityStatus">The new activity status of the info panel.</param>
     public void ToggleInfoPanelActive(bool newActivityStatus)

@@ -68,6 +68,7 @@ public class IntroTheme : MonoBehaviour
             DontDestroyOnLoad(gameLoaded);
             StartCoroutine(PlayIntroTheme(1500)); //the intro theme is shown for 1.5 seconds (is more in reality because the method calls also 
                                                   //need some time
+            AdManager.Instance.CreateSingleton(); //creates an adManager singleton
         }
     }
 

@@ -40,7 +40,7 @@ public class CreditsManager : MonoBehaviour
     /// </summary>
     public void SupportEMailToClipboard()
     {
-        string email = "support@theStrawberryStudios.com"; 
+        string email = "strawberryStudios.info@gmail.com"; 
         CopyTextToDeviceClipboard(email);
         ToggleShowMessagePanelActive(true);
         Invoke("CloseMessagePanel", 4);
