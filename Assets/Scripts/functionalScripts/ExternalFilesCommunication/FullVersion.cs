@@ -52,6 +52,25 @@ public class FullVersion : Singleton<FullVersion>
     }
 
     /// <summary>
+    /// Whether the user allows appodeal to collect ad data or not. If not the ads should still be played (at least on newer 
+    /// versions), but without personalization. [Retrieved from/saved to an external file.]
+    /// </summary>
+    public AdDataCollectionPermitted CollectionOfDataConsent
+    {
+        get
+        {
+            FullVersionData data = RetrieveFullVersionDataFromFile();
+            return data.CollectionOfDataConsent;
+        }
+        set
+        {
+            FullVersionData data = RetrieveFullVersionDataFromFile();
+            data.CollectionOfDataConsent = value;
+            SaveFullVersionDataToFile(data);
+        }
+    }
+
+    /// <summary>
     /// Counter that counts how many blocks where collected since the last ad was shown. Determines when the next ad should be played.
     /// See 'AdManager' for criteria how often ads are played. [Retrieved from/saved to an external file.]
     /// </summary>
@@ -115,35 +134,14 @@ public class FullVersion : Singleton<FullVersion>
     }
 
     /// <summary>
-    /// Only needed if IAPs are disabled. Stores the information of each customized color whether it was unlocked or is still locked. The information
-    /// is stored in an external file.
-    /// The index of the bool array identifies the color whose info is stored (1 = orange, 2 = dark green, 3 = faint red)
-    /// </summary>
-    public bool[] CustomColorUnlocked
-    {
-        get
-        {
-            FullVersionData data = RetrieveFullVersionDataFromFile();
-            return data.CustomColorUnlocked;
-        }
-        set
-        {
-            FullVersionData data = RetrieveFullVersionDataFromFile();
-            data.CustomColorUnlocked = value;
-            SaveFullVersionDataToFile(data);
-        }
-    }
-
-    /// <summary>
     /// This method retrieves the fullVersion data from an external file where it is saved.
     /// </summary>
     /// <returns>It returns an object of the type FullVersionData which holds all of the full-verion-specific data.</returns>
     public FullVersionData RetrieveFullVersionDataFromFile()
     {
-        BinaryFormatter bf = new BinaryFormatter();
-
         if (File.Exists(Application.persistentDataPath + "/dontDeleteOrAlter.dat"))
         {
+            BinaryFormatter bf = new BinaryFormatter();
             FileStream file = File.Open(Application.persistentDataPath + "/dontDeleteOrAlter.dat", FileMode.Open);
             FullVersionData data = (FullVersionData)bf.Deserialize(file);
             file.Close();
@@ -154,13 +152,7 @@ public class FullVersion : Singleton<FullVersion>
         {
             Debug.Log("Full version data couldn't be retrieved from the external file. Check whether the persistentDataPath " +
                 "addresses the right directory");
-            FileStream file = File.Create(Application.persistentDataPath + "/dontDeleteOrAlter.dat");
-            FullVersionData newFullVersionData = new FullVersionData();
-
-            bf.Serialize(file, newFullVersionData);
-            file.Close();
-
-            return newFullVersionData;
+            return new FullVersionData();
         }
     }
 
@@ -194,8 +186,6 @@ public class FullVersionData
     {
         IsGameFirstLoaded = GameFirstLoaded.firstLoaded; //actually redundant, as the first defined value of an enum is assigned to it by default
         IsFullVersionUnlocked = FullVersionUnlocked.notUnlocked; //redundant, see comment above
-        //deviceIdentifier = SystemInfo.deviceUniqueIdentifier; //device unique identifier
-        CustomColorUnlocked = new bool[] { false, false, false };
     }
 
     private String deviceIdentifier;
@@ -212,7 +202,7 @@ public class FullVersionData
         {
             return SystemInfo.deviceUniqueIdentifier == deviceIdentifier ? unlockedState : FullVersionUnlocked.notUnlocked;
         }
-        set
+      set
         {
             deviceIdentifier = SystemInfo.deviceUniqueIdentifier;
             unlockedState = value;
@@ -225,6 +215,12 @@ public class FullVersionData
     public GameFirstLoaded IsGameFirstLoaded
     { get; set; }
 
+    /// <summary>
+    /// Whether the user allows appodeal to collect ad data or not. If not the ads should still be played (at least on newer 
+    /// versions), but without personalization.
+    /// </summary>
+    public AdDataCollectionPermitted CollectionOfDataConsent
+    { get; set; }
 
     /// <summary>
     /// Counter that counts how many blocks where collected since the last ad was shown. Determines when the next ad should be played.
@@ -244,12 +240,5 @@ public class FullVersionData
     /// How many interstitials were shown since the last video.
     /// </summary>
     public int InterstitialsShown
-    { get; set; }
-
-    /// <summary>
-    /// Only needed if IAPs are disabled. Stores the information of each customized color whether it was unlocked or is still locked.
-    /// The index of the bool array identifies the color whose info is stored (1 = orange, 2 = dark green, 3 = faint red)
-    /// </summary>
-    public bool[] CustomColorUnlocked
     { get; set; }
 }

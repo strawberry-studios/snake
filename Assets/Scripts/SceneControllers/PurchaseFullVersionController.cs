@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
 
-public class PurchaseFullVersionController : MonoBehaviour, IPurchase
+public class PurchaseFullVersionController : MonoBehaviour
 {
     public GameObject infoPanel, blocker;
     public Text infoPanelText;
@@ -23,8 +23,8 @@ public class PurchaseFullVersionController : MonoBehaviour, IPurchase
     // Start is called before the first frame update
     void Start()
     {
-        timeUntilClosureOfInfoPanel = (int)(StaticValues.TimeUntilClosureOfInfoPanel * 1.5f);
-        fadingTimeInfoPanel = StaticValues.FadingTimeInfoPanel;
+        timeUntilClosureOfInfoPanel = (int)(StaticValues.timeUntilClosureOfInfoPanel * 1.5f);
+        fadingTimeInfoPanel = StaticValues.fadingTimeInfoPanel;
         infoPanel.SetActive(false);
         blocker.SetActive(false);
         StartCoroutine(IncreaseSize(priceText));
@@ -80,7 +80,7 @@ public class PurchaseFullVersionController : MonoBehaviour, IPurchase
 
     /// <summary>
     /// Toggles the info panel (in)active. If it is toggled active, it will start fading after 'timeUntilClosureOfPanel' and it'll fade within
-    /// 'FadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
+    /// 'fadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
     /// </summary>
     /// <param name="newActivityStatus">The new activity status of the info panel.</param>
     public void ToggleInfoPanelActive(bool newActivityStatus)
@@ -107,19 +107,11 @@ public class PurchaseFullVersionController : MonoBehaviour, IPurchase
 
     // to be attached to buttons:
 
-    ///// <summary>
-    ///// Locks the full version - only for test purposes. The info is saved to an external file.
-    ///// </summary>
-    //public void DismissFullVersion()
-    //{
-    //    FullVersion.Instance.IsFullVersionUnlocked = FullVersionUnlocked.notUnlocked;
-    //}
-
     /// <summary>
-    /// Opens the scene where the 'FullVersion' can be restored.
+    /// Locks the full version - only for test purposes. The info is saved to an external file.
     /// </summary>
-    public void OpenRestoreFullVersion()
+    public void DismissFullVersion()
     {
-        SceneManager.LoadScene("RestoreFullVersion");
+        FullVersion.Instance.IsFullVersionUnlocked = FullVersionUnlocked.notUnlocked;
     }
 }

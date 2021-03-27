@@ -46,11 +46,6 @@ public class PreferencesController : MonoBehaviour
     /// Game object parenting all objects dealing with the vibration-settings.
     /// </summary>
     public GameObject vibrationSettings;
-    /// <summary>
-    /// Whether In-App Purchases are enabled or not. If enabled, the sounds can be customized if the Full Version was unlocked, elsewhise the 
-    /// button "Customize Sound" doens't exist.
-    /// </summary>
-    bool iAPsEnabled;
 
     private void Awake()
     {
@@ -68,10 +63,9 @@ public class PreferencesController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        iAPsEnabled = StaticValues.IAPsEnabled;
         soundController = GameObject.FindGameObjectWithTag("SoundController");
-        timeUntilClosureOfInfoPanel = StaticValues.TimeUntilClosureOfInfoPanel;
-        fadingTimeInfoPanel = StaticValues.FadingTimeInfoPanel;
+        timeUntilClosureOfInfoPanel = StaticValues.timeUntilClosureOfInfoPanel;
+        fadingTimeInfoPanel = StaticValues.fadingTimeInfoPanel;
         LoadSoundsToggleState(soundToggle);
         LoadVibrationToggleState(vibrationToggle);
         originalInfoSizeY = infoRect.sizeDelta.y;
@@ -94,9 +88,8 @@ public class PreferencesController : MonoBehaviour
     {
         ControlsMode c = DataSaver.Instance.ControlsModeActivated;
         controlsMode.value = c == ControlsMode.buttonsOnly ? 0 :
-                                c == ControlsMode.swipeOnly ? 1 : 
-                                    c == ControlsMode.keypad ? 2 : 3;
-        if (controlsMode.value == (0 | 3))
+                                c == ControlsMode.swipeOnly ? 1 : 2;
+        if (controlsMode.value != 0)
             ToggleSwipesSensitivityActive(true);
     }
 
@@ -171,10 +164,6 @@ public class PreferencesController : MonoBehaviour
                 ToggleSwipesSensitivityActive(true);
                 break;
             case 2:
-                DataSaver.Instance.ControlsModeActivated = ControlsMode.keypad;
-                ToggleSwipesSensitivityActive(false);
-                break;
-            case 3:
                 DataSaver.Instance.ControlsModeActivated = ControlsMode.buttonsAndSwipe;
                 ToggleSwipesSensitivityActive(true);
                 break;
@@ -220,24 +209,18 @@ public class PreferencesController : MonoBehaviour
     /// <summary>
     /// Toggles the 'customizeSounds' button (in)active.
     /// </summary>
-    /// <param name="active">The new activity status of the 'customizeSoundsButton'. Only if IAPs are enabled, elsewhise the button is 
-    /// disabled by default.</param>
+    /// <param name="active">The new activity status of the 'customizeSoundsButton'.</param>
     void ToggleCustomizeSoundsButtonActive(bool active)
     {
-        if (iAPsEnabled)
-        {
-            if (customizeSoundsButton.activeInHierarchy != active)
-                customizeSoundsButton.SetActive(active);
-        }
-        else
-            customizeSoundsButton.SetActive(false);
+        if (customizeSoundsButton.activeInHierarchy != active)
+            customizeSoundsButton.SetActive(active);
     }
 
     //methods for displaying information on the info tabs:
 
     /// <summary>
     /// Toggles the info panel (in)active. If it is toggled active, it will start fading after 'timeUntilClosureOfPanel' and it'll fade within
-    /// 'FadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
+    /// 'fadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
     /// Note: When the info panel is set active, all info buttons are set inactive (they're reactivated when the info panel is closed).
     /// </summary>
     /// <param name="newActivityStatus">The new activity status of the info panel.</param>
@@ -258,7 +241,7 @@ public class PreferencesController : MonoBehaviour
 
     ///// <summary>
     ///// Toggles the info panel (in)active. If it is toggled active, it will start fading after 'timeUntilClosureOfPanel' and it'll fade within
-    ///// 'FadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
+    ///// 'fadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
     ///// Note: When the info panel is set active, all info buttons are set inactive (they're reactivated when the info panel is closed).
     ///// The full version button is activated if the info panel is set active and 'showFullVersionButton' is set to true.
     ///// </summary>
@@ -273,7 +256,7 @@ public class PreferencesController : MonoBehaviour
     //    {
     //        if(fullVersionButton.activeInHierarchy != showFullVersionButton)
     //            fullVersionButton.SetActive(showFullVersionButton);
-    //        CoroutinesSingleton.Instance.CloseUIObjectAutomatically(infoPanel, TimeUntilClosureOfInfoPanel, FadingTimeInfoPanel, infoButtons, blocker);
+    //        CoroutinesSingleton.Instance.CloseUIObjectAutomatically(infoPanel, timeUntilClosureOfInfoPanel, fadingTimeInfoPanel, infoButtons, blocker);
     //    }
     //    else
     //        CoroutinesSingleton.Instance.StopClosingUIObjectAutomatically();
@@ -322,8 +305,8 @@ public class PreferencesController : MonoBehaviour
         ToggleInfoPanelSize(true);
         ShowInfoButtons(false);
         infoHeader.text = "SWIPE SENSITIVITY:";
-        infoText.text = "By changing the position of the slider, the sensitivity of the swipes is altered. " +
-            "\nThe higher the swipe sensitivity is, the faster the snake reacts to your swipes. ";
+        infoText.text = "By changing the position of the slider the sensitivity of the swipes is altered. \nThe higher the swipe sensitivity is" +
+            " the faster the snake reacts to your swipes.";
     }
 
     /// <summary>
@@ -335,15 +318,8 @@ public class PreferencesController : MonoBehaviour
         ToggleInfoPanelSize(false);
         ShowInfoButtons(false);
         infoHeader.text = "SOUNDS:";
-        if (iAPsEnabled)
-        {
-            infoText.text = "If this option is toggled on, sound effects will be played." +
-                "\nThey can even be customized if the full version was purchased.";
-        }
-        else
-        {
-            infoText.text = "If this option is toggled on, sound effects will be played.";
-        }
+        infoText.text = "If this option is toggled on, sound effects will be played." +
+            "\nThey can even be customized if the full version was purchased.";
     }
 
     /// <summary>

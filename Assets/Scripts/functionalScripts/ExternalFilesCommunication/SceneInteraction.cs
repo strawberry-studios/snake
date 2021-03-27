@@ -66,10 +66,9 @@ public class SceneInteraction : Singleton<SceneInteraction>
     /// <returns>It returns an object of the type SceneInteractionData which holds all of the scene-interaction-specific data.</returns>
     public SceneInteractionData RetrieveSceneInteractionDataFromFile()
     {
-        BinaryFormatter bf = new BinaryFormatter();
-
         if (File.Exists(Application.persistentDataPath + "/sceneInteraction.dat"))
         {
+            BinaryFormatter bf = new BinaryFormatter();
             FileStream file = File.Open(Application.persistentDataPath + "/sceneInteraction.dat", FileMode.Open);
             SceneInteractionData data = (SceneInteractionData)bf.Deserialize(file);
             file.Close();
@@ -80,14 +79,7 @@ public class SceneInteraction : Singleton<SceneInteraction>
         {
             Debug.Log("Scene interaction data couldn't be retrieved from the external file. Check whether the persistentDataPath " +
                 "addresses the right directory");
-
-            FileStream file = File.Create(Application.persistentDataPath + "/sceneInteraction.dat");
-            SceneInteractionData newSceneInteractionData = new SceneInteractionData();
-
-            bf.Serialize(file, newSceneInteractionData);
-            file.Close();
-
-            return newSceneInteractionData;
+            return new SceneInteractionData();
         }
     }
 

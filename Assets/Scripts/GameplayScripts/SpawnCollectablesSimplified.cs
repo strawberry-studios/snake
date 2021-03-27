@@ -46,7 +46,7 @@ public class SpawnCollectablesSimplified : MonoBehaviour
         Rows = GetComponent<CreateWorld>().GetRows();
         Columns = GetComponent<CreateWorld>().GetColumns();
         squares = GetSquares();
-        CreateFirstCollectable();
+        CreateNewCollectable();
     }
 
     /// <summary>
@@ -60,9 +60,7 @@ public class SpawnCollectablesSimplified : MonoBehaviour
             for (int c = 0; c < Columns; c++)
                 currentlyOccupiedFields[r, c] = false;
         }
-        currentlyOccupiedFields[StaticValues.PlayerStartX-1, StaticValues.PlayerStartY-1] = true;
-        //print(StaticValues.PlayerStartX);
-        //print(StaticValues.PlayerStartY);
+        currentlyOccupiedFields[StaticValues.PlayerStartX, StaticValues.PlayerStartY] = true;
 
         int freeSquares = squares - 1;
 
@@ -106,8 +104,6 @@ public class SpawnCollectablesSimplified : MonoBehaviour
                 currentlyOccupiedFields[r, c] = false;
         }
         currentlyOccupiedFields[snakeHeadRow, snakeHeadColumn] = true;
-        //print(snakeHeadRow);
-        //print(snakeHeadColumn);
 
         int freeSquares = squares - snakeHead.GetComponent<SnakeBlockController>().CountCurrentBlocks();
 

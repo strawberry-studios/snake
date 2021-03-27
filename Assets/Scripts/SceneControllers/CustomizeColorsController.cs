@@ -86,7 +86,7 @@ public class CustomizeColorsController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        //FullVersion.Instance.IsFullVersionUnlocked = FullVersionUnlocked.unlocked;
+        FullVersion.Instance.IsFullVersionUnlocked = FullVersionUnlocked.unlocked;
         data = DataSaver.Instance.RetrievePlayerDataFromFile();
         customPanel.panel.SetActive(false);
         pixelMode = data.GetShowPixels();

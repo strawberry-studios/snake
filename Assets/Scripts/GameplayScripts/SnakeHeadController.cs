@@ -75,13 +75,39 @@ public class SnakeHeadController : MonoBehaviour
         get; set;
     }
 
+    /// <summary>
+    /// Sets up everything so that the snake blocks (also pixeled ones) can be spawned. 
+    /// A new collectable is created.
+    /// </summary>
+    private void Startup()
+    {
+        SetSize();
+        //SpawnPixeledBlocks = new SpawnPixeledBlocks();
+        //PlayerData data = DataSaver.Instance.RetrievePlayerDataFromFile();
+        //pixeled = data.GetShowPixels();
+        //gridLinesOn = data.GetShowGridLines();
+
+        snakeBlocksParent = actualGameComponents.GetOrAddEmptyGameObject("SnakeBlocksParent");
+
+        //if (pixeled)
+        //{
+        //    if (gridLinesOn)
+        //        SpawnPixeledBlocks.SetupPixelsAndGridLines(snakeBodyPrefab, snakeBlocksParent);
+        //    else
+        //        SpawnPixeledBlocks.SetupPixelsNoGridLines(snakeBodyPrefab, snakeBlocksParent);
+
+        //    SpawnPixeledBlocks.ModifySnakeHeadPixeled(gameObject);
+        //    pixeledSnakeBlock =  SpawnPixeledBlocks.CreateNewBlockPixeled(Vector3.zero);
+        //    pixeledSnakeBlock.SetActive(false);
+        //}
+    }
+
     // Start is called before the first frame update
     void Start()
     {
-        SetSize();
-        snakeBlocksParent = actualGameComponents.GetOrAddEmptyGameObject("SnakeBlocksParent");
+        Startup();
         PlayerData currentData = DataSaver.Instance.RetrievePlayerDataFromFile();
-        StartNavigationCoroutines(currentData);
+        currentControlsMode = currentData.ControlsModeActivated;
         soundsOn = currentData.SoundOn;
         soundController = GameObject.FindGameObjectWithTag("SoundController");
         SetHeadColor();
@@ -97,23 +123,6 @@ public class SnakeHeadController : MonoBehaviour
         delayedSpawnings = currentData.GetDelayedSpawningsState();
         vibrationOn = currentData.VibrationsOn;
         noWorldBoundaries = !DataSaver.Instance.GetWorldBoundariesState();
-    }
-
-    /// <summary>
-    /// This method starts coroutines to control the Snake by swipes or with the keypad buttons depending on the current controls mode.
-    /// </summary>
-    /// <returns></returns>
-    /// <param name="currentData">The current data as an object of class 'Player Data'.</param>
-    void StartNavigationCoroutines(PlayerData currentData)
-    {
-        currentControlsMode = currentData.ControlsModeActivated;
-
-        if (currentControlsMode == ControlsMode.swipeOnly | currentControlsMode == ControlsMode.buttonsAndSwipe)
-        {
-            StartCoroutine(ControlSnakeWithSwipes());
-        }
-        //else if (currentControlsMode == ControlsMode.keypad)
-        //    StartCoroutine(ControlSnakeWithKeypad());
     }
 
     /// <summary>
@@ -139,7 +148,6 @@ public class SnakeHeadController : MonoBehaviour
             yield return null;
         }
         directionManager.GetComponent<SetDirectionManager>().GameStarted = true;
-        gameModeManager.GetComponent<GameOverManager>().EnableScoreUIs();
     }
 
     /// <summary>
@@ -148,54 +156,20 @@ public class SnakeHeadController : MonoBehaviour
     /// </summary>
     void SetHeadColor()
     {
-        PlayerData currentData = DataSaver.Instance.RetrievePlayerDataFromFile();
         Color snakeHeadColor;
-
-        if (currentData.GetSnakeHeadMarked())
-        {
-            if (currentData.GetShowPixels())
-                snakeHeadColor = currentData.GetSnakeHeadPixeledColor().ConvertIntArrayIntoColor();
-            else
-                snakeHeadColor = currentData.GetSnakeHeadColor().ConvertIntArrayIntoColor();
-        }
+        if (DataSaver.Instance.GetSnakeHeadMarked())
+            snakeHeadColor = DataSaver.Instance.GetSnakeHeadColor().ConvertIntArrayIntoColor();
         else
             snakeHeadColor = DataSaver.Instance.GetSnakeColor().ConvertIntArrayIntoColor();
         gameObject.GetComponent<Renderer>().material.SetColor("_EmissionColor", snakeHeadColor);
         gameObject.GetComponent<Renderer>().material.SetColor("_Color", snakeHeadColor);
     }
 
-    /// <summary>
-    /// This coroutine functions like an Update and is called every frame to check if a swipe was made.
-    /// The effect only occurs if the coroutine was started in the 'Start' method (which only happens if the controls mode includes swipes).
-    /// </summary>
-    /// <returns></returns>
-    IEnumerator ControlSnakeWithSwipes()
-    {
-        while(true)
-        {
-            directionManager.GetComponent<SetDirectionManager>().ChangeDirectionViaSwipe();
-            yield return null;
-        }
-    }
-
-    ///// <summary>
-    ///// This coroutine functions like an Update and is called every frame to check if a keypad button was pressed (to move the Snake).
-    ///// The effect only occurs if the coroutine was started in the 'Start' method (which only happens if the controls mode is 'keypad').
-    ///// </summary>
-    ///// <returns></returns>
-    //IEnumerator ControlSnakeWithKeypad()
-    //{
-    //    while(true)
-    //    {
-    //        directionManager.GetComponent<SetDirectionManager>().ChangeDirectionWithKeypad();
-    //        yield return null;
-    //    }
-    //}
-
     // Update is called once per frame
-
-    void LateUpdate()
+    void Update()
     {
+        if (currentControlsMode != ControlsMode.buttonsOnly)
+            directionManager.GetComponent<SetDirectionManager>().ChangeDirectionViaSwipe();
         Move();
     }
 

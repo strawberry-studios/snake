@@ -18,13 +18,13 @@ EditorBuildSettings:
     path: Assets/Scenes/HighScores.unity
     guid: 756d66eb26c73f24aaae540715fc8fac
   - enabled: 1
-    path: Assets/Scenes/IAPs/PurchaseFullVersion.unity
+    path: Assets/Scenes/PurchaseFullVersion.unity
     guid: 88eb79da74ab4234cbddc5042497aa8e
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/IAPs/RestoreFullVersion.unity
     guid: f3052d371e3fb1b4cb3d2c831b3a244e
   - enabled: 1
-    path: Assets/Scenes/MoreOptionsScenes/Credits.unity
+    path: Assets/Scenes/Credits.unity
     guid: e5987e291c0476d47af91c138517aa37
   - enabled: 1
     path: Assets/Scenes/OptionsThemes/Difficulty.unity
@@ -56,7 +56,10 @@ EditorBuildSettings:
   - enabled: 0
     path: 
     guid: 00000000000000000000000000000000
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/MoreOptionsScenes/LegalInformation.unity
     guid: 9f76095bbae0bd348a676ef36f2720bd
+  - enabled: 1
+    path: Assets/Scenes/MoreOptionsScenes/PrivacySettings.unity
+    guid: 8c087d921355ec04dbf6f7c1abdbd4fb
   m_configObjects: {}

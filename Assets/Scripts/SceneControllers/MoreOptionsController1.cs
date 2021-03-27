@@ -28,11 +28,6 @@ public class MoreOptionsController1 : MonoBehaviour
     /// The customizeSounds button as GameObject.
     /// </summary>
     public GameObject customizeSoundsButton;
-    /// <summary>
-    /// Whether In-App Purchases are enabled or not. If enabled, the sounds can be customized if the Full Version was unlocked, elsewhise the 
-    /// button "Customize Sound" doens't exist.
-    /// </summary>
-    bool iAPsEnabled;
 
     private void Awake()
     {
@@ -42,10 +37,9 @@ public class MoreOptionsController1 : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        iAPsEnabled = StaticValues.IAPsEnabled;
         soundController = GameObject.FindGameObjectWithTag("SoundController");
-        timeUntilClosureOfInfoPanel = StaticValues.TimeUntilClosureOfInfoPanel;
-        fadingTimeInfoPanel = StaticValues.FadingTimeInfoPanel;
+        timeUntilClosureOfInfoPanel = StaticValues.timeUntilClosureOfInfoPanel;
+        fadingTimeInfoPanel = StaticValues.fadingTimeInfoPanel;
         LoadSoundsToggleState(soundToggle);
         LoadVibrationToggleState(vibrationToggle);
         infoPanel.SetActive(false);
@@ -85,17 +79,11 @@ public class MoreOptionsController1 : MonoBehaviour
     /// <summary>
     /// Toggles the 'customizeSounds' button (in)active.
     /// </summary>
-    /// <param name="active">The new activity status of the 'customizeSoundsButton'. Only if IAPs are enabled, elsewhise the button is 
-    /// disabled by default.</param>
+    /// <param name="active">The new activity status of the 'customizeSoundsButton'.</param>
     void ToggleCustomizeSoundsButtonActive(bool active)
     {
-        if (iAPsEnabled)
-        {
-            if (customizeSoundsButton.activeInHierarchy != active)
-                customizeSoundsButton.SetActive(active);
-        }
-        else
-            customizeSoundsButton.SetActive(false);
+        if(customizeSoundsButton.activeInHierarchy != active)
+            customizeSoundsButton.SetActive(active);
     }
 
     //methods that need to be assigned to buttons in the scene:
@@ -114,6 +102,24 @@ public class MoreOptionsController1 : MonoBehaviour
     public void OpenInstructions()
     {
         SceneManager.LoadScene("Instructions");
+    }
+
+    /// <summary>
+    /// Opens the privacy settings, if the user has already selected an ads-personalization option.
+    /// Elsewhise the panel where the user can select one of the options is opened.
+    /// </summary>
+    public void OpenPrivacySettings()
+    {
+        if(FullVersion.Instance.CollectionOfDataConsent != AdDataCollectionPermitted.notSet)
+            SceneManager.LoadScene("PrivacySettings");
+        else
+        {
+            GameObject adsPersonalization = GameObject.FindGameObjectWithTag("PersonalizedAdsConsent");
+            if (adsPersonalization != null)
+                adsPersonalization.GetComponent<AdsPersonalizationConsent>().TogglePanelsActive(true);
+            else
+                Debug.Log("The ads personalization panel should be opened. But nothing happens. #Debug");
+        }
     }
 
     /// <summary>
@@ -176,7 +182,7 @@ public class MoreOptionsController1 : MonoBehaviour
 
     /// <summary>
     /// Toggles the info panel (in)active. If it is toggled active, it will start fading after 'timeUntilClosureOfPanel' and it'll fade within
-    /// 'FadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
+    /// 'fadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
     /// Note: When the info panel is set active, all info buttons are set inactive (they're reactivated when the info panel is closed).
     /// </summary>
     /// <param name="newActivityStatus">The new activity status of the info panel.</param>
@@ -197,7 +203,7 @@ public class MoreOptionsController1 : MonoBehaviour
 
     ///// <summary>
     ///// Toggles the info panel (in)active. If it is toggled active, it will start fading after 'timeUntilClosureOfPanel' and it'll fade within
-    ///// 'FadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
+    ///// 'fadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
     ///// Note: When the info panel is set active, all info buttons are set inactive (they're reactivated when the info panel is closed).
     ///// The full version button is activated if the info panel is set active and 'showFullVersionButton' is set to true.
     ///// </summary>
@@ -212,7 +218,7 @@ public class MoreOptionsController1 : MonoBehaviour
     //    {
     //        if (fullVersionButton.activeInHierarchy != showFullVersionButton)
     //            fullVersionButton.SetActive(showFullVersionButton);
-    //        CoroutinesSingleton.Instance.CloseUIObjectAutomatically(infoPanel, TimeUntilClosureOfInfoPanel, FadingTimeInfoPanel, infoButtons, blocker);
+    //        CoroutinesSingleton.Instance.CloseUIObjectAutomatically(infoPanel, timeUntilClosureOfInfoPanel, fadingTimeInfoPanel, infoButtons, blocker);
     //    }
     //    else
     //        CoroutinesSingleton.Instance.StopClosingUIObjectAutomatically();
@@ -247,15 +253,8 @@ public class MoreOptionsController1 : MonoBehaviour
         ToggleInfoPanelActive(true);
         ShowInfoButtons(false);
         infoHeader.text = "SOUNDS:";
-        if (iAPsEnabled)
-        {
-            infoText.text = "If this option is toggled on, sound effects will be played." +
-                "\nThey can even be customized if the full version was purchased.";
-        }
-        else
-        {
-            infoText.text = "If this option is toggled on, sound effects will be played.";
-        }
+        infoText.text = "If this option is toggled on, sound effects will be played." +
+            "\nThey can even be customized if the full version was purchased.";
     }
 
     /// <summary>
@@ -312,14 +311,6 @@ public class MoreOptionsController1 : MonoBehaviour
     public void LoadUnlockFullVersion()
     {
         SceneManager.LoadScene("PurchaseFullVersion");
-    }
-
-    /// <summary>
-    /// Loads the scene where the legal information can be looked up.
-    /// </summary>
-    public void LoadLegalInformation()
-    {
-        SceneManager.LoadScene("LegalInformation");
     }
 
     /// <summary>

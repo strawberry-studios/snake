@@ -15,11 +15,15 @@ public class SetupOfGame : MonoBehaviour
     {
         if (FullVersion.Instance.IsGameFirstLoaded == GameFirstLoaded.firstLoaded)//!PlayerPrefs.HasKey("firstOpened"))
         {
-            SetUpPlayerData(); //also creates a new HighScoresData
+            SetUpPlayerData();
 
-            SceneInteractionData sceneInteractionData = SceneInteraction.Instance.RetrieveSceneInteractionDataFromFile(); //create if it doesn't exist yet
-
+            SceneInteractionData sceneInteractionData = new SceneInteractionData();
+            SceneInteraction.Instance.SaveSceneInteractionDataToFile(sceneInteractionData); //saves the 'starting' scene interaction settings
+                                                                                            //to an external file
             FullVersion.Instance.IsGameFirstLoaded = GameFirstLoaded.notFirstLoaded;
+
+            HighScoresData highScoresData = new HighScoresData();
+            HighScores.Instance.SaveHighScoresDataToFile(highScoresData);
         }
         //highscore.text = "HIGHSCORE: " + DataSaver.Instance.GetHighscore() + "%";
     }
@@ -57,7 +61,7 @@ public class SetupOfGame : MonoBehaviour
         PlayerData playerData = new PlayerData();
         playerData.SetHighscore(0);
         playerData.ToggleWorldBoundaries(false);
-        playerData.SetWorldSize(12);
+        playerData.SetWorldSize(8);
         playerData.SpeedSliderValue = 5;
         playerData.ShowPixels(false); //or perhaps better false??? I DON'T KNOW
         playerData.ToggleDelayedSpawnings(false);

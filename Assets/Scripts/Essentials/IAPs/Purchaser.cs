@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Purchasing;
-using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Delegate of the type void not taking any parameters.
@@ -12,11 +11,6 @@ public delegate void PurchaseFailedMethods();
 
 public class Purchaser : MonoBehaviour, IStoreListener
 {
-    /// <summary>
-    /// The game object in the scene which has a component implementing the 'ShowErrorMessage' method
-    /// </summary>
-    IPurchase debugger;
-
     private static IStoreController m_StoreController;         
     private static IExtensionProvider m_StoreExtensionProvider; 
 
@@ -26,28 +20,26 @@ public class Purchaser : MonoBehaviour, IStoreListener
     PurchaseFailedMethods purchaseFailed;
 
     /// <summary>
-    /// The product ID that is specified in the all consoles.
-    ///     HAS TO BE PASTED ON ALL CONSOLES CORRECTLY! THAT IS MANDATORY!
+    /// The product ID that is specified in the google play console.
+    ///     HAS TO BE PASTED ON THE GOOGLE PLAY CONSOLE CORRECTLY! THAT IS MANDATORY!
     /// </summary>
-    public static string productIDFullVersion;
+    public static string productIDFullVersion = "com.strawberrystudios.snake.fullversion";
 
-    void Awake()
-    {
-        productIDFullVersion = StaticValues.productIDFullVersion;
-    }
+    //public Purchaser()
+    //{
+    //    var builder = ConfigurationBuilder.Instance(StandardPurchasingModule.Instance());
+    //    builder.AddProduct("100_gold_coins", ProductType.Consumable, new IDs
+    //    {
+    //        {"100_gold_coins_google", GooglePlay.Name},
+    //        {"100_gold_coins_mac", MacAppStore.Name}
+    //    });
+
+    //    UnityPurchasing.Initialize(this, builder);
+    //}
+
 
     void Start()
     {
-        PurchaseFullVersionController pc = GetComponent<PurchaseFullVersionController>();
-        RestoreFullVersionController pr = GetComponent<RestoreFullVersionController>();
-
-        if (pc != null)
-            debugger = pc;
-        else if (pr != null)
-            debugger = pr;
-        else
-            Debug.Log("The debugger interface wasn't implemented. This will result in errors. Check the code.");
-
         if (m_StoreController == null)
             InitializePurchasing();
 
@@ -61,11 +53,9 @@ public class Purchaser : MonoBehaviour, IStoreListener
             return;
 
         var builder = ConfigurationBuilder.Instance(StandardPurchasingModule.Instance());
-
-        builder.AddProduct(productIDFullVersion, ProductType.NonConsumable, 
-            new IDs {
-            {productIDFullVersion, GooglePlay.Name },
-            {productIDFullVersion,  AmazonApps.Name}
+        
+        builder.AddProduct(productIDFullVersion, ProductType.NonConsumable, new IDs {
+            {productIDFullVersion, GooglePlay.Name}
         });
 
         UnityPurchasing.Initialize(this, builder);
@@ -85,44 +75,8 @@ public class Purchaser : MonoBehaviour, IStoreListener
     public void BuyFullVersionNonConsumbable()
     {
         // Buy the non-consumable. Expect a response either through ProcessPurchase or OnPurchaseFailed asynchronously.
+        InitializePurchasing();
         BuyProductID(productIDFullVersion);
-    }
-
-    /// <summary>
-    /// If the full version was already unlocked, it can be restored with the following method. (If the file holding it was deleted
-    /// or the device on which the game is installed switched.)
-    /// </summary>
-    public void RestoreFullVersion()
-    {
-        if (IsInitialized())
-        {
-            Product product = m_StoreController.products.WithID(productIDFullVersion);
-            if (product != null && product.hasReceipt)
-            {
-                PurchaseFullVersionReward();
-            }
-            else
-            {
-                //debugger.ShowErrorMessageOnPanel("The Full Version couldn't be restored. It wasn't unlocked on this account. " +
-                //    "If you are certain that you unlocked the Full Version, make sure to install this game with the same" +
-                //    " account with which you purchased the Full Version.");
-
-                if (GetComponent<RestoreFullVersionController>() != null)
-                {
-                    GetComponent<RestoreFullVersionController>().ShowRestoreFullVersionFailed();
-                }
-                else
-                    Debug.Log("The 'restore full version controller' object wasn't attached to the controller of the 'restore full version" +
-                        "scene'. Make sure that this script is attached, otherwise the player can't be informed if the full version can't " +
-                        "be restored.");
-            }
-        }
-        else
-        {
-            debugger.ShowErrorMessageOnPanel("The Full Version couldn't be restored. " +
-                "The connection to the store couldn't be established. Check your internet connection and try again later.");
-            InitializePurchasing();
-        }
     }
 
     /// <summary>
@@ -144,16 +98,15 @@ public class Purchaser : MonoBehaviour, IStoreListener
             else
             {
                 Debug.Log("BuyProductID: FAIL. Not purchasing product, either is not found or is not available for purchase");
-                debugger.ShowErrorMessageOnPanel("The purchase which you attempted to make failed. " +
+                GetComponent<PurchaseFullVersionController>().ShowErrorMessageOnPanel("The purchase which you attempted to make failed. " +
                     "The product which you want to purchase is currently not available. Please try again later.");
             }
         }
         else
         {
             Debug.Log("BuyProductID FAIL. Not initialized.");
-            debugger.ShowErrorMessageOnPanel("The purchase which you attempted to make failed. " +
+            GetComponent<PurchaseFullVersionController>().ShowErrorMessageOnPanel("The purchase which you attempted to make failed. " +
                     "The connection to the store couldn't be established. Please try again later.");
-            InitializePurchasing();
         }
     }
 
@@ -200,7 +153,7 @@ public class Purchaser : MonoBehaviour, IStoreListener
     public void OnInitializeFailed(InitializationFailureReason error)
     {
         Debug.Log("OnInitializeFailed InitializationFailureReason:" + error);
-        debugger.ShowErrorMessageOnPanel("The connection to the store couldn't be established. " +
+        GetComponent<PurchaseFullVersionController>().ShowErrorMessageOnPanel("The connection to the store couldn't be established. " +
             "The following error occured:" + error);
     }
 
@@ -210,33 +163,22 @@ public class Purchaser : MonoBehaviour, IStoreListener
         {
             Debug.Log(string.Format("ProcessPurchase: PASS. Product: '{0}'", args.purchasedProduct.definition.id));
 
-            PurchaseFullVersionReward();
+            FullVersion.Instance.IsFullVersionUnlocked = FullVersionUnlocked.unlocked;
+            GetComponent<BackToMenu>().ReturnToMenu();
         }
         else
         {
             Debug.Log(string.Format("ProcessPurchase: FAIL. Unrecognized product: '{0}'", args.purchasedProduct.definition.id));
-            debugger.ShowErrorMessageOnPanel("The purchase which you attempted to make failed. " +
+            GetComponent<PurchaseFullVersionController>().ShowErrorMessageOnPanel("The purchase which you attempted to make failed. " +
                     "The product which you want to purchase couldn't be recognized. Please try again later.");
         }
         return PurchaseProcessingResult.Complete;
     }
 
-    /// <summary>
-    /// The player is rewarded the full version.
-    /// FullVersionUnlocked is set to true and the menu is opened again.
-    /// </summary>
-    void PurchaseFullVersionReward()
-    {
-        FullVersion.Instance.IsFullVersionUnlocked = FullVersionUnlocked.unlocked;
-        Time.timeScale = 1.0f; //makes sure that the timeScale is set to 1 (means: real time)
-        SceneManager.LoadScene("Menu");
-        //GetComponent<BackToMenu>().ReturnToMenu();
-    }
-
     public void OnPurchaseFailed(Product product, PurchaseFailureReason failureReason)
     {
         Debug.Log(string.Format("OnPurchaseFailed: FAIL. Product: '{0}', PurchaseFailureReason: {1}", product.definition.storeSpecificId, failureReason));
-        debugger.ShowErrorMessageOnPanel("The purchase which you attempted to make failed. " +
+        GetComponent<PurchaseFullVersionController>().ShowErrorMessageOnPanel("The purchase which you attempted to make failed. " +
                     "The following error occured: " + failureReason);
     }
 }

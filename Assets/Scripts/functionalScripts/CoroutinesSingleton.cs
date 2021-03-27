@@ -72,7 +72,7 @@ public class CoroutinesSingleton : Singleton<CoroutinesSingleton>
     /// <returns></returns>
     IEnumerator FadeUIObject(GameObject objectToFade, int fadingTimeInMillis)
     {
-        float timeInterval = (fadingTimeInMillis / 51f); //the time after which at a time another contribution to the fading is made
+        float timeInterval = (fadingTimeInMillis / 255f); //the time after which at a time another contribution to the fading is made
         int currentAlpha = 255; //the current alpha value of the object (when it reaches zero the object becomes fully transparent)
 
         bool blockerOn;
@@ -85,14 +85,14 @@ public class CoroutinesSingleton : Singleton<CoroutinesSingleton>
         if (blockerOn)
         {
             currentBlockerAlpha = blocker.GetComponent<Image>().color.a;
-            stepIteration = currentBlockerAlpha / 51;
+            stepIteration = currentBlockerAlpha / 255;
             blockerAlpha = (int)(currentBlockerAlpha*255);
         }
 
         while (currentAlpha > 0 && objectToFade.activeInHierarchy)
         {
             objectToFade.SetNewAlphaForObjectAndChildren(currentAlpha);
-            currentAlpha -= 5;
+            currentAlpha --;
             if(blockerOn)
             {
                 currentBlockerAlpha -= stepIteration;

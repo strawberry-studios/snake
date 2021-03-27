@@ -3,18 +3,21 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using TMPro;
 
 public class MenuInteractionManager : MonoBehaviour
 {
     /// <summary>
     /// The text informing the player that the full version is unlocked.
     /// </summary>
-    public TextMeshProUGUI fullVersionUnlockedText;
+    public Text fullVersionUnlockedText;
     /// <summary>
     /// The button with which the 'getFullVersion' scene can be loaded.
     /// </summary>
     public GameObject unlockFullVersionButton;
+    /// <summary>
+    /// The title of the game (text).
+    /// </summary>
+    public GameObject title;
 
     //private void OnGUI()
     //{
@@ -34,24 +37,16 @@ public class MenuInteractionManager : MonoBehaviour
     /// </summary>
     public void SetUpFullVersionUIs()
     {
-        if (StaticValues.IAPsEnabled)
+        if(FullVersion.Instance.IsFullVersionUnlocked == FullVersionUnlocked.unlocked)
         {
-            if (FullVersion.Instance.IsFullVersionUnlocked == FullVersionUnlocked.unlocked)
-            {
-                fullVersionUnlockedText.enabled = true;
-                unlockFullVersionButton.SetActive(false);
-                //title.transform.position = new Vector3(title.transform.position.x, title.transform.position.y + 15, title.transform.position.z); 
-            }
-            else
-            {
-                fullVersionUnlockedText.enabled = false;
-                unlockFullVersionButton.SetActive(true);
-            }
+            fullVersionUnlockedText.enabled = true;
+            unlockFullVersionButton.SetActive(false);
+            title.transform.position = new Vector3(title.transform.position.x, title.transform.position.y + 15, title.transform.position.z); 
         }
         else
         {
             fullVersionUnlockedText.enabled = false;
-            unlockFullVersionButton.SetActive(false);
+            unlockFullVersionButton.SetActive(true);
         }
     }
 

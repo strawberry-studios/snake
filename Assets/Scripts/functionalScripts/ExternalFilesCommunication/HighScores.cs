@@ -58,37 +58,20 @@ public class HighScores : Singleton<HighScores>
     /// The high scores data is device specific, when the high scores data is copied/moved to another device it gets overridden.</returns>
     public HighScoresData RetrieveHighScoresDataFromFile()
     {
-        BinaryFormatter bf = new BinaryFormatter();
-
         if (File.Exists(Application.persistentDataPath + "/difficulty.dat"))
         {
+            BinaryFormatter bf = new BinaryFormatter();
             FileStream file = File.Open(Application.persistentDataPath + "/difficulty.dat", FileMode.Open);
             HighScoresData data = (HighScoresData)bf.Deserialize(file);
             file.Close();
 
-            if (data.DeviceSpecificNumber == SystemInfo.deviceUniqueIdentifier)
-                return data;
-            else
-            {
-                FileStream newFile = File.Create(Application.persistentDataPath + "/difficulty.dat");
-                HighScoresData toBeSaved = new HighScoresData();
-                bf.Serialize(newFile, toBeSaved);
-                file.Close();
-                return toBeSaved;
-            }
+            return data.DeviceSpecificNumber == SystemInfo.deviceUniqueIdentifier ? data : new HighScoresData();
         }
         else
         {
             Debug.Log("High Scores data couldn't be retrieved from the external file. Check whether the persistentDataPath " +
                 "addresses the right directory");
-
-            FileStream file = File.Create(Application.persistentDataPath + "/difficulty.dat");
-            HighScoresData newHighScoresData = new HighScoresData();
-
-            bf.Serialize(file, newHighScoresData);
-            file.Close();
-
-            return newHighScoresData;
+            return new HighScoresData();
         }
     }
 
@@ -266,7 +249,7 @@ public static class ScoreConverter
     {
         int percentagScore = permilleScore / 10;
         string percentageText = permilleScore < 1000 ? "" + percentagScore + "." + Mathf.RoundToInt(permilleScore - percentagScore*10) + "%" : 
-            "" + 100 + "." + 0 + "%";
+            "" + 100 + "%";
         return percentageText;
     }
 }

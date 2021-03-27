@@ -481,25 +481,6 @@ public class DataSaver : Singleton<DataSaver>
     }
 
     /// <summary>
-    /// Returns a color that is similar to the color of the snake, yet which has a slightly different shade.
-    /// The shade of the color is more significantly different from the actual snake color than if using "GetSnakeHeadColor". 
-    /// Note: This method only works when the RGB values it uses (see the switch statement) correspond to the colors of the color-select-objects
-    /// in the snake-color-skins-scene.
-    /// </summary>
-    /// <returns></returns>
-    public int[] GetSnakeHeadPixeledColor()
-    {
-        PlayerData data = RetrievePlayerDataFromFile();
-        if (data != null)
-            return data.GetSnakeHeadPixeledColor();
-        else
-        {
-            Debug.Log("The current color of the snake head couldn't be retrieved from the external playerInfo file. It is set to green by default.");
-            return Color.green.ConvertColorToIntArray();
-        }
-    }
-
-    /// <summary>
     /// Returns the current color of the collectables. If it can't be retrieved, green is returned by default.
     /// </summary>
     /// <returns></returns>
@@ -526,10 +507,9 @@ public class DataSaver : Singleton<DataSaver>
     /// <returns>It returns an object of the type PlayerData which holds all of the player-specific data.</returns>
     public PlayerData RetrievePlayerDataFromFile()
     {
-        BinaryFormatter bf = new BinaryFormatter();
-
         if (File.Exists(Application.persistentDataPath + "/playerinfo.dat"))
         {
+            BinaryFormatter bf = new BinaryFormatter();
             FileStream file = File.Open(Application.persistentDataPath + "/playerinfo.dat", FileMode.Open);
             PlayerData data = (PlayerData)bf.Deserialize(file);
             file.Close();
@@ -540,14 +520,7 @@ public class DataSaver : Singleton<DataSaver>
         {
             Debug.Log("Data couldn't be retrieved from file. Check whether the persistentDataPath " +
                 "addresses the right directory");
-
-            FileStream file = File.Create(Application.persistentDataPath + "/playerinfo.dat");
-            PlayerData newPlayerData = new PlayerData();
-
-            bf.Serialize(file, newPlayerData);
-            file.Close();
-
-            return newPlayerData;
+            return new PlayerData();
         }
     }
 
@@ -568,7 +541,7 @@ public class DataSaver : Singleton<DataSaver>
 /// <summary>
 /// The controls-mode with which the snake is controlled.
 /// </summary>
-public enum ControlsMode { buttonsOnly, swipeOnly, keypad, buttonsAndSwipe };
+public enum ControlsMode { buttonsOnly, swipeOnly, buttonsAndSwipe };
 /// <summary>
 /// The scene from which the 'customize colors' scene was opened at last.
 /// </summary>
@@ -913,29 +886,6 @@ public class PlayerData
     }
 
     /// <summary>
-    /// Returns a color that is similar to the color of the snake, yet which has a slightly different shade.
-    /// The shade of the color is more significantly different from the actual snake color than if using "GetSnakeHeadColor". 
-    /// Note: This method only works when the RGB values it uses (see the switch statement) correspond to the colors of the color-select-objects
-    /// in the snake-color-skins-scene.
-    /// </summary>
-    /// <returns></returns>
-    public int[] GetSnakeHeadPixeledColor()
-    {
-        Color c = snakePlayingColor.ConvertIntArrayIntoColor();
-
-        return c.IsColorEqualRGB(Color.green) ? new int[] { 0, 110, 0, 255 } :
-               c.IsColorEqualRGB(Color.red) ? new int[] { 110, 0, 0, 255 } :
-               c.IsColorEqualRGB(Color.blue) ? new int[] { 0, 90, 255, 255 } :
-               c.IsColorEqualRGB(new Color(1, 1, 0, 1)) ? new int[] { 250, 115, 0, 255 } :
-               c.IsColorEqualRGB(new Color(1, 0, 1, 1)) ? new int[] { 90, 0, 170, 255 } :
-               c.IsColorEqualRGB(Color.cyan) ? new int[] { 0, 130, 255, 255 } :
-               //c.IsColorEqualRGB(new Color(245/255f, 109/255f, 0, 1)) ? new int[] { 255, 67, 0, 255 } :
-               //c.IsColorEqualRGB(new Color(115/255f, 125/255f, 34/255f, 1)) ? new int[] { 200, 110, 40, 255 } :
-               //c.IsColorEqualRGB(new Color(186/255f, 69/255f, 69/255f, 1)) ? new int[] { 135, 20, 10, 255 } : new int[] { 0, 100, 0, 255 };
-               DetermineCustomSnakeHeadColorPixeled();
-    }
-
-    /// <summary>
     /// Determines a darker or brighter shade of the snake color in which the snake head will be marked if 'snakeHeadMarked' is on.
     /// These custom snake head colors are only used if the snake color is also a customized color (only if the full version was unlocked).
     /// </summary>
@@ -959,31 +909,7 @@ public class PlayerData
     }
 
     /// <summary>
-    /// Determines a darker or brighter shade of the snake color in which the snake head will be marked if 'snakeHeadMarked' is on.
-    /// The color is significantly different from the actual snake color, so that you can notice the difference even if using the pixel mode.
-    /// These custom snake head colors are only used if the snake color is also a customized color (only if the full version was unlocked).
-    /// </summary>
-    /// <returns></returns>
-    int[] DetermineCustomSnakeHeadColorPixeled()
-    {
-        int r = snakePlayingColor[0];
-        int g = snakePlayingColor[1];
-        int b = snakePlayingColor[2];
-
-        if (r >= 80 || g >= 80 || b >= 80)
-            return ReturnDarkerShadeColorPixeled();
-        else if (r > g && r > b)
-            return ReturnMuchBrighterShadeColorPixeled(0);
-        else if (g > r && g > b)
-            return ReturnMuchBrighterShadeColorPixeled(1);
-        else if (b > r && b > g)
-            return ReturnMuchBrighterShadeColorPixeled(2);
-        else
-            return ReturnSlightlyBrighterShadePixeled();
-    }
-
-    /// <summary>
-    /// Returns a player color where the intensity of each of the RGB values is reduced by 30 percents.
+    /// Returns a player color where the intensity of each of the RGB values is reduced by 20 percents.
     /// </summary>
     /// <returns>Returns an int array.</returns>
     int[] ReturnDarkerShadeColor()
@@ -1038,61 +964,6 @@ public class PlayerData
     }
 
     /// <summary>
-    /// Returns a player color where the intensity of each of the RGB values is reduced by 40 percents.
-    /// </summary>
-    /// <returns>Returns an int array.</returns>
-    int[] ReturnDarkerShadeColorPixeled()
-    {
-        int[] array = snakePlayingColor;
-        for (int i = 0; i <= 2; i++)
-            snakePlayingColor[i] = (int)(0.6f * snakePlayingColor[i]);
-        return array;
-    }
-
-    /// <summary>
-    /// Returns a player color where the intensity of each of the RGB values is increased. The main component (R,G or B component with the highest 
-    /// intensity) is increased by 30 (each intensity ranges from 0 to 255), the other components are increased by 5.
-    /// </summary>
-    /// <param name="colorIndex">The index of the R,G or B component that is most intense. (0 = R, 1 = G, 2 = B)</param>
-    /// <returns>Returns an int array.</returns>
-    int[] ReturnMuchBrighterShadeColorPixeled(int colorIndex)
-    {
-        int[] array = snakePlayingColor;
-        array[colorIndex] += 30;
-        switch (colorIndex)
-        {
-            case 0:
-                array[1] += 5;
-                array[2] += 5;
-                break;
-            case 1:
-                array[0] += 5;
-                array[2] += 5;
-                break;
-            case 2:
-                array[0] += 5;
-                array[1] += 5;
-                break;
-            default: //must not occur, shouldn't occur provided that no one passes another value than 0, 1 or 2
-                break;
-        }
-        return array;
-    }
-
-    /// <summary>
-    /// Returns a player color where the intensity of each of the RGB values is increased by 15. (Values ranging from 0 to 255)
-    /// </summary>
-    /// <returns>Returns an int array.</returns>
-    int[] ReturnSlightlyBrighterShadePixeled()
-    {
-        int[] array = snakePlayingColor;
-        array[0] += 15;
-        array[1] += 15;
-        array[2] += 15;
-        return array;
-    }
-
-    /// <summary>
     /// Returns the current color of the collectables as a Color.
     /// </summary>
     /// <returns></returns>
@@ -1134,6 +1005,8 @@ public class PlayerData
         {
             if (delayedSpawnings)
                 currentScore *= delayedFactor;
+            else
+                currentScore = currentScore;//noting should happen
         }
 
         //the difficulty is finally set:

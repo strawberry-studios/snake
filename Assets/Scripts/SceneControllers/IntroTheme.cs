@@ -2,33 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using System;
-
-/// <summary>
-/// References snake logo components.
-/// </summary>
-[Serializable]
-public class SnakeLogoComponents
-{
-    public Image snakeBody, snakeDot, appleDot;
-
-    /// <summary>
-    /// Sets the color of the snake logo. It is colored in the snake color, apple color and in the snake-highlighting color (the color with which
-    /// the snake head can be highlighted)
-    /// </summary>
-    public void SetColorOfSnakeLogo()
-    {
-        PlayerData currentData = DataSaver.Instance.RetrievePlayerDataFromFile();
-        snakeBody.color = currentData.GetSnakeColor().ConvertIntArrayIntoColor();
-        snakeDot.color = currentData.GetSnakeHeadColor().ConvertIntArrayIntoColor();
-        appleDot.color = currentData.GetCollectablesColor().ConvertIntArrayIntoColor();
-    }
-}
 
 /// <summary>
 /// Manages the intro theme and how it is played.
-/// Also manages all things that have to be done exactly once when the game is (re)loaded. 
-/// Also serves as a kind of Menu Manager. #MultiTasking
 /// </summary>
 public class IntroTheme : MonoBehaviour
 {
@@ -44,11 +20,6 @@ public class IntroTheme : MonoBehaviour
     /// Object which is created once whenever the game is loaded and doesn't get deleted beginning from then (until the game is exited).
     /// </summary>
     GameObject gameLoaded;
-    /// <summary>
-    /// The components of the snake logo.
-    /// </summary>
-    public SnakeLogoComponents snakeLogoComponents;
-    
 
     private void Awake()
     {
@@ -68,12 +39,8 @@ public class IntroTheme : MonoBehaviour
             DontDestroyOnLoad(gameLoaded);
             StartCoroutine(PlayIntroTheme(1500)); //the intro theme is shown for 1.5 seconds (is more in reality because the method calls also 
                                                   //need some time
+            AdManager.Instance.CreateSingleton(); //creates an adManager singleton
         }
-    }
-
-    private void Start()
-    {
-        snakeLogoComponents.SetColorOfSnakeLogo();
     }
 
     /// <summary>
@@ -81,7 +48,7 @@ public class IntroTheme : MonoBehaviour
     /// the width (x-scale) of all UIs is modified (multiplied by this factor). This method is only called once per loading of the game (at the very
     /// beginning).
     /// </summary>
-    void SetUIWidthFactor()                         
+    void SetUIWidthFactor()
     {
         //the default aspect ratio is 16:9, if the aspect ratio of a device is different, the UIs which were created for the ratio 16:9 must be 
         //modified: this is the factor the x-scale of the UIs needs to be multiplied by:

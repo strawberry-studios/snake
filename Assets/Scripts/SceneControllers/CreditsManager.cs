@@ -32,7 +32,7 @@ public class CreditsManager : MonoBehaviour
     /// </summary>
     public void OpenStrawberryStudiosWebsite()
     {
-        Application.OpenURL("http://www.thestrawberrystudios.com");
+        Application.OpenURL("http://www.thestrawberrystudios.wixsite.com/strawberrystudios");
     }
 
     /// <summary>
@@ -40,7 +40,7 @@ public class CreditsManager : MonoBehaviour
     /// </summary>
     public void SupportEMailToClipboard()
     {
-        string email = "support@theStrawberryStudios.com"; 
+        string email = "strawberryStudios.info@gmail.com"; 
         CopyTextToDeviceClipboard(email);
         ToggleShowMessagePanelActive(true);
         Invoke("CloseMessagePanel", 4);

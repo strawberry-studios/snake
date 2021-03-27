@@ -39,8 +39,8 @@ public class DifficultyController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        timeUntilClosureOfInfoPanel = StaticValues.TimeUntilClosureOfInfoPanel;
-        fadingTimeInfoPanel = StaticValues.FadingTimeInfoPanel;
+        timeUntilClosureOfInfoPanel = StaticValues.timeUntilClosureOfInfoPanel;
+        fadingTimeInfoPanel = StaticValues.fadingTimeInfoPanel;
         LoadWorldBoundariesToggleState(worldBoundariesToggle);
         LoadDelayedSpawningsToggleState(delayedSpawningsToggle);
         LoadSpeedSliderState(speedSlider);
@@ -173,7 +173,7 @@ public class DifficultyController : MonoBehaviour
 
     /// <summary>
     /// Toggles the info panel (in)active. If it is toggled active, it will start fading after 'timeUntilClosureOfPanel' and it'll fade within
-    /// 'FadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
+    /// 'fadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
     /// Note: When the info panel is set active, all info buttons are set inactive (they're reactivated when the info panel is closed).
     /// </summary>
     /// <param name="newActivityStatus">The new activity status of the info panel.</param>
@@ -198,8 +198,8 @@ public class DifficultyController : MonoBehaviour
         ToggleInfoPanelActive(true);
         ToggleInfoPanelSize(false);
         infoHeader.text = "WORLD SIZE:";    
-        infoText.text = "By changing the position of this slider, the size of the world gets bigger or smaller. " +
-            "\nThe bigger the world is, the more difficult the game.";
+        infoText.text = "By changing the position of this slider the size of the world gets bigger or smaller. " +
+            "\nThe bigger the world the more difficult the game.";
     }
 
     /// <summary>
@@ -210,8 +210,8 @@ public class DifficultyController : MonoBehaviour
         ToggleInfoPanelActive(true);
         ToggleInfoPanelSize(false);
         infoHeader.text = "SPEED:";
-        infoText.text = "By changing the position of this slider, the speed of the snake increases or decreases. " +
-            "\nThe faster the snake is, the more difficult the game.";
+        infoText.text = "By changing the position of this slider the speed of the snake increases or decreases. " +
+            "\nThe faster the snake the more difficult the game.";
     }
 
     /// <summary>
@@ -221,9 +221,9 @@ public class DifficultyController : MonoBehaviour
     {
         ToggleInfoPanelActive(true);
         ToggleInfoPanelSize(true);
-        infoHeader.text = "DELAYED SPAWNING:";
-        infoText.text = "If this option is toggled on, the game becomes more difficult. " +
-            "\nThe longer you play, the more likely it is that a new apple doesn't spawn immediately after collecting one.";
+        infoHeader.text = "DELAYED SPAWNINGS:";
+        infoText.text = "If this option is toggled on, the game becomes more difficult. \nThe longer you play the more likely it is that a new apple"
+            + " isn't spawned immidiately after collecting one.";
     }
 
     /// <summary>
