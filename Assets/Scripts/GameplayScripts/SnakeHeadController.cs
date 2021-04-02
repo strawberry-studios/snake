@@ -5,28 +5,26 @@ using UnityEngine.SceneManagement;
 
 public class SnakeHeadController : MonoBehaviour
 {
+    //READ THIS BEFORE YOU MAKE CHANGES TO THE SPAWNING OR MOVING:
+    // Order of events: each frame a check is made whether the snake should move, (depending on the speed, it is more or less often true)
+    // If it moves the movement of each block of the snake is completed at first: only the first and last block move. The second last block becomes 
+    // the last block and the former last block becomes the second block. The direction can be changed at any time (via pressing the buttons or 
+    // swipes, but either way always in fixed update). After the moving was completed, a  check is made whether the snake head now touches a collectable
+    // If so, it is collected and a new one is spawned. The length of the snake is always one block longer than you can see, the last block being inactive.
+    // When a new block is collected, the last inactive block is set active. Afterwards a new block is spawned (to prevent inefficency)
+
     /// <summary>
     /// another script that provides functionality for spawning pixeled blocks
     /// </summary>
-    //public SpawnPixeledBlocks SpawnPixeledBlocks { get; set; }
+    public SpawnPixeledBlocks SpawnPixeledBlocks { get; set; }
 
     public GameObject gameModeManager;
     public GameObject snakeBodyPrefab;
     private GameObject end; //references the end of the snake
 
     public GameObject directionManager; //references the directionManager
-    /// <summary>
-    /// Game object which parents all components that are atually visible during gameplay.
-    /// </summary>
-    public GameObject actualGameComponents; 
+    public GameObject actualGameComponents; //game objects which should parent all components that are actually visible during gameplay
     GameObject snakeBlocksParent; //parents all snake blocks except for the head of the snake
-
-    /// <summary>
-    /// A pixeled snake block that is created in the start function. It is set inactive and can be duplicated for creating a new pixeled snake block
-    /// without too big performance issues.
-    /// </summary>
-    private GameObject pixeledSnakeBlock;
-
     public enum DIRECTION { none, up, down, left, right };
     private DIRECTION direction;
     private int framesUntilMove; //Determines after how many frames a movement should occur, the speed is set by the player in the settings scene
@@ -49,8 +47,8 @@ public class SnakeHeadController : MonoBehaviour
     /// </summary>
     private bool soundsOn;
 
-    //bool pixeled; //whether the blocks of the snake are pixeled
-    //bool gridLinesOn; //whether the grid lines should be visible or not
+    bool pixeled; //whether the blocks of the snake are pixeled
+    bool gridLinesOn; //whether the grid lines should be visible or not
 
     /// <summary>
     /// The current controls mode. Whether the snake can be controlled with buttons/swipes/both.
@@ -75,19 +73,43 @@ public class SnakeHeadController : MonoBehaviour
         get; set;
     }
 
+    /// <summary>
+    /// Sets up everything so that the snake blocks (also pixeled ones) can be spawned. 
+    /// A new collectable is created.
+    /// </summary>
+    private void Startup()
+    {
+        SetSize();
+        SpawnPixeledBlocks = new SpawnPixeledBlocks();
+        PlayerData data = DataSaver.Instance.RetrievePlayerDataFromFile();
+        pixeled = data.GetShowPixels();
+        gridLinesOn = data.GetShowGridLines();
+
+        snakeBlocksParent = actualGameComponents.GetOrAddEmptyGameObject("SnakeBlocksParent");
+
+        if (pixeled)
+        {
+            if (gridLinesOn)
+                SpawnPixeledBlocks.SetupPixelsAndGridLines(snakeBodyPrefab, snakeBlocksParent);
+            else
+                SpawnPixeledBlocks.SetupPixelsNoGridLines(snakeBodyPrefab, snakeBlocksParent);
+
+            SpawnPixeledBlocks.ModifySnakeHeadPixeled(gameObject);
+        }
+    }
+
     // Start is called before the first frame update
     void Start()
     {
-        SetSize();
-        snakeBlocksParent = actualGameComponents.GetOrAddEmptyGameObject("SnakeBlocksParent");
+        Startup();
         PlayerData currentData = DataSaver.Instance.RetrievePlayerDataFromFile();
-        StartNavigationCoroutines(currentData);
+        currentControlsMode = currentData.ControlsModeActivated;
         soundsOn = currentData.SoundOn;
         soundController = GameObject.FindGameObjectWithTag("SoundController");
         SetHeadColor();
         end = gameObject;
+        GetComponent<SnakeBlockController>().SetPositionAndPreviousPosition(3, 3);
         SetFramesUntilMove();
-        SetPositionOfSnakeHead();
         timeCount = framesUntilMove * 0.015f;
         direction = DIRECTION.none;
         StartCoroutine(CheckWhetherGameWasStarted());
@@ -97,31 +119,6 @@ public class SnakeHeadController : MonoBehaviour
         delayedSpawnings = currentData.GetDelayedSpawningsState();
         vibrationOn = currentData.VibrationsOn;
         noWorldBoundaries = !DataSaver.Instance.GetWorldBoundariesState();
-    }
-
-    /// <summary>
-    /// This method starts coroutines to control the Snake by swipes or with the keypad buttons depending on the current controls mode.
-    /// </summary>
-    /// <returns></returns>
-    /// <param name="currentData">The current data as an object of class 'Player Data'.</param>
-    void StartNavigationCoroutines(PlayerData currentData)
-    {
-        currentControlsMode = currentData.ControlsModeActivated;
-
-        if (currentControlsMode == ControlsMode.swipeOnly | currentControlsMode == ControlsMode.buttonsAndSwipe)
-        {
-            StartCoroutine(ControlSnakeWithSwipes());
-        }
-        //else if (currentControlsMode == ControlsMode.keypad)
-        //    StartCoroutine(ControlSnakeWithKeypad());
-    }
-
-    /// <summary>
-    /// The position of the snake head is set. Currently the position is 3/3 in coordinates.
-    /// </summary>
-    void SetPositionOfSnakeHead()
-    {
-        GetComponent<SnakeBlockController>().SetPosition(StaticValues.PlayerStartX, StaticValues.PlayerStartY);
     }
 
     /// <summary>
@@ -139,7 +136,6 @@ public class SnakeHeadController : MonoBehaviour
             yield return null;
         }
         directionManager.GetComponent<SetDirectionManager>().GameStarted = true;
-        gameModeManager.GetComponent<GameOverManager>().EnableScoreUIs();
     }
 
     /// <summary>
@@ -148,54 +144,20 @@ public class SnakeHeadController : MonoBehaviour
     /// </summary>
     void SetHeadColor()
     {
-        PlayerData currentData = DataSaver.Instance.RetrievePlayerDataFromFile();
         Color snakeHeadColor;
-
-        if (currentData.GetSnakeHeadMarked())
-        {
-            if (currentData.GetShowPixels())
-                snakeHeadColor = currentData.GetSnakeHeadPixeledColor().ConvertIntArrayIntoColor();
-            else
-                snakeHeadColor = currentData.GetSnakeHeadColor().ConvertIntArrayIntoColor();
-        }
+        if (DataSaver.Instance.GetSnakeHeadMarked())
+            snakeHeadColor = DataSaver.Instance.GetSnakeHeadColor().ConvertIntArrayIntoColor();
         else
             snakeHeadColor = DataSaver.Instance.GetSnakeColor().ConvertIntArrayIntoColor();
         gameObject.GetComponent<Renderer>().material.SetColor("_EmissionColor", snakeHeadColor);
         gameObject.GetComponent<Renderer>().material.SetColor("_Color", snakeHeadColor);
     }
 
-    /// <summary>
-    /// This coroutine functions like an Update and is called every frame to check if a swipe was made.
-    /// The effect only occurs if the coroutine was started in the 'Start' method (which only happens if the controls mode includes swipes).
-    /// </summary>
-    /// <returns></returns>
-    IEnumerator ControlSnakeWithSwipes()
-    {
-        while(true)
-        {
-            directionManager.GetComponent<SetDirectionManager>().ChangeDirectionViaSwipe();
-            yield return null;
-        }
-    }
-
-    ///// <summary>
-    ///// This coroutine functions like an Update and is called every frame to check if a keypad button was pressed (to move the Snake).
-    ///// The effect only occurs if the coroutine was started in the 'Start' method (which only happens if the controls mode is 'keypad').
-    ///// </summary>
-    ///// <returns></returns>
-    //IEnumerator ControlSnakeWithKeypad()
-    //{
-    //    while(true)
-    //    {
-    //        directionManager.GetComponent<SetDirectionManager>().ChangeDirectionWithKeypad();
-    //        yield return null;
-    //    }
-    //}
-
     // Update is called once per frame
-
-    void LateUpdate()
+    void Update()
     {
+        if (currentControlsMode != ControlsMode.buttonsOnly)
+            directionManager.GetComponent<SetDirectionManager>().ChangeDirectionViaSwipe();
         Move();
     }
 
@@ -279,76 +241,97 @@ public class SnakeHeadController : MonoBehaviour
             int currentRow = GetComponent<SnakeBlockController>().GetCurrentRow();
             int currentColumn = GetComponent<SnakeBlockController>().GetCurrentColumn();
 
+            //SETS THE NEW POSITION OF THE SNAKE HEAD; IF WORLD BOUNDS ARE ON, TOUCHING THE WORLD MARGINS MEANS DEATH
             switch(direction)
             {
                 case DIRECTION.up:
                     if (currentRow - 1 < 1)
                     {
                         if (noWorldBoundaries)
-                        {
                             currentRow = rows + 1;
-                        }
                         else
-                        {
                             Lose(false);
-                        }
                     }
-                    GetComponent<SnakeBlockController>().SetPosition(currentRow - 1, currentColumn);
+                    GetComponent<SnakeBlockController>().SetPositionAndPreviousPosition(currentRow - 1, currentColumn);
                     break;
                 case DIRECTION.down:
-                        if (currentRow + 1 > rows)
-                        {
-                            if (noWorldBoundaries)
-                            {
-                                currentRow = 0;
-                            }
-                            else
-                            {
-                                Lose(false);
-                            }
-                        }
-                        GetComponent<SnakeBlockController>().SetPosition(currentRow + 1, currentColumn);
+                    if (currentRow + 1 > rows)
+                    {
+                        if (noWorldBoundaries)
+                            currentRow = 0;
+                        else
+                            Lose(false);
+                    }
+                    GetComponent<SnakeBlockController>().SetPositionAndPreviousPosition(currentRow + 1, currentColumn);
                     break;
                 case DIRECTION.right:
                     if (currentColumn + 1 > columns)
                     {
                         if (noWorldBoundaries)
-                        {
                             currentColumn = 0;
-                        }
                         else
-                        {
                             Lose(false);
-                        }
                     }
-                    GetComponent<SnakeBlockController>().SetPosition(currentRow, currentColumn + 1);
+                    GetComponent<SnakeBlockController>().SetPositionAndPreviousPosition(currentRow, currentColumn + 1);
                     break;
                 case DIRECTION.left:
                     if (currentColumn - 1 < 1)
                     {
                         if (noWorldBoundaries)
-                        {
                             currentColumn = columns + 1;
-                        }
                         else
-                        {
                             Lose(false);
-                        }
                     }
-                    GetComponent<SnakeBlockController>().SetPosition(currentRow, currentColumn - 1);
+                    GetComponent<SnakeBlockController>().SetPositionAndPreviousPosition(currentRow, currentColumn - 1);
                     break;
             }
-            
+
             timeCount = 0.0f;
             directionManager.GetComponent<SetDirectionManager>().SetDirectionChanged(false);
-            //the direction in the SetDirectionManager can be changed again
-            MovementCompleted = GetComponent<SnakeBlockController>().MoveSuccessor(); //the movement of the snake is set to completed once all
+
+            //MOVES THE REST OF THE SNAKE; ONLY THE LAST BLOCK IS MOVED AND BECOMES THE SECOND BLOCK (to make the moving more efficient)
+
+            MovementCompleted = MoveRestOfSnake();//GetComponent<SnakeBlockController>().MoveSuccessor(); //the movement of the snake is set to completed once all
                                                                                       //blocks were moved
         }
         if (timeCount < framesUntilMove * 0.015 && Time.timeScale != 0.0f)
         {
             timeCount += Time.deltaTime;
         }
+    }
+
+    /// <summary>
+    /// Moves the rest of the snake. The last block becomes the second one, the other blocks aren't moved.
+    /// </summary>
+    /// <returns>Returns true as soon as all of the movements (of all blocks) were completed.</returns>
+    bool MoveRestOfSnake()
+    {
+        GameObject successor = GetComponent<SnakeBlockController>().Successor;
+        int previousRow = GetComponent<SnakeBlockController>().GetPreviousRow();
+        int previousColumn = GetComponent<SnakeBlockController>().GetPreviousColumn();
+
+        if (GetComponent<SnakeBlockController>().IsSnakeLengthGreaterThan2(1))
+        {
+            //the snake length is greater than 2 and the last block of the snake will become the second one:
+
+            GameObject newSecondBlock = GetComponent<SnakeBlockController>().SetNewLastBlock();
+            GetComponent<SnakeBlockController>().Successor = newSecondBlock;
+            newSecondBlock.GetComponent<SnakeBlockController>().Successor = 
+                successor;
+
+            //changes the position of the new second block, the 'visually visible' moving is thereby done;
+            newSecondBlock.GetComponent<SnakeBlockController>().SetPositionInWorld(previousRow, previousColumn);
+
+            //changes the coordinates-positions of all snakeBlocks:
+            GetComponent<SnakeBlockController>().Successor.GetComponent<SnakeBlockController>().SetPositionInCoordinates(previousRow, previousColumn);
+        }
+        else
+        {
+            //the snake length is smaller or equal to 2, only the second block of the snake needs to be moved, if it exists:
+            if (successor != null)
+                successor.GetComponent<SnakeBlockController>().SetPositionAndPreviousPosition(previousRow, previousColumn);
+        }
+        return true;
     }
 
     /// <summary>
@@ -384,19 +367,23 @@ public class SnakeHeadController : MonoBehaviour
         int previousEndColumn, previousEndRow; //the previous row and column (positions) of the end of the snake
         previousEndRow = end.GetComponent<SnakeBlockController>().GetPreviousRow();
         previousEndColumn = end.GetComponent<SnakeBlockController>().GetPreviousColumn();
-
         snakeBody = CreateANewSnakeBlock(previousEndRow, previousEndColumn) ;
-        snakeBody.GetComponent<SnakeBlockController>().SetPosition(previousEndRow, previousEndColumn);
+        snakeBody.GetComponent<SnakeBlockController>().SetPositionAndPreviousPosition(previousEndRow, previousEndColumn);
         snakeBody.transform.SetParent(snakeBlocksParent.transform);
         end.GetComponent<SnakeBlockController>().Successor = snakeBody;
         end = snakeBody;
-
         gameModeManager.GetComponent<GameOverManager>().AddToScore(1);
+        //gameModeManager.GetComponent<GameOverManager>().SetNewHighscore();
+
+        //gameModeManager.GetComponent<SpawnCollectablesManager>().CreateNewCollectable();  //not used because of complexity and 
+        // unpredicatability. But works.
 
         if (delayedSpawnings)
             gameModeManager.GetComponent<SpawnCollectablesSimplified>().CreateNewCollectableDelayed();
         else
             gameModeManager.GetComponent<SpawnCollectablesSimplified>().CreateNewCollectable();
+
+        //PixelCollectable();
     }
 
     /// <summary>
@@ -422,6 +409,11 @@ public class SnakeHeadController : MonoBehaviour
     /// <returns></returns>
     GameObject CreateANewSnakeBlock(int positionAsRow, int positionAsColumn)
     {
+        if(pixeled)
+        {
+            return SpawnPixeledBlocks.CreateNewBlockPixeled(GetComponent<SnakeBlockController>().ConvertIntsIntoPosition(positionAsRow, positionAsColumn));
+        }
+        //if the pixel mode isn't activated:
         return Instantiate(snakeBodyPrefab, GetComponent<SnakeBlockController>().ConvertIntsIntoPosition(positionAsRow, 
             positionAsColumn), Quaternion.identity);
     }
@@ -471,5 +463,246 @@ public class SnakeHeadController : MonoBehaviour
             }
         }
         return GetComponent<SnakeBlockController>().DetermineOccupiedFields(currentlyOccupiedFields);
+    }
+}
+
+/// <summary>
+/// This class provides methods for spawning pixeled blocks. None of these methods are executed on their won, 
+/// they're only called by other scripts (mainly 'SnakeHeadController')
+/// </summary>
+public class SpawnPixeledBlocks
+{
+    /// <summary>
+    /// The game object which all game-managing scripts are attached to
+    /// </summary>
+    GameObject gameModeManager;
+    /// <summary>
+    /// The size of the pixels, is approximately equal to the thickness of gridLines, if activated
+    /// </summary>
+    float pixelSize;
+    /// <summary>
+    /// The length of a square of the world matrix (minus the thickness of the gridLines, if activated)
+    /// </summary>
+    float length;
+    /// <summary>
+    /// The number of pixels which one snake block will consist of.
+    /// </summary>
+    int pixelsNumber;
+    /// <summary>
+    /// The parent of the pixel objects which form a snake block as template to be instantiated.
+    /// </summary>
+    GameObject snakeBlockParentTemplate;
+    /// <summary>
+    /// The minimal position where the first pixel is spawned. Required for the pixel spawning iteration.
+    /// </summary>
+    float minPosition;
+    /// <summary>
+    /// The pixel template that can be duplicated for creating the single pixels of a snake block.
+    /// </summary>
+    GameObject pixel;
+    /// <summary>
+    /// The parent of the snake blocks.
+    /// </summary>
+    GameObject parentOfSnakeBlocks;
+
+    /// <summary>
+    /// Returns the pixel size.
+    /// </summary>
+    public float GetPixelSize()
+    {
+        return pixelSize;
+    }
+
+    //methods for creating the pixeled objects if gridLines and pixelMode are on:
+
+    /// <summary>
+    /// Sets up the necessary fields etc. for spawning snake blocks when pixel mode and the grid lines are activated.
+    /// </summary>
+    public void SetupPixelsAndGridLines(GameObject snakeBlockPrefab, GameObject newParentOfSnakeBlocks)
+    {
+        parentOfSnakeBlocks = newParentOfSnakeBlocks;
+
+        //the length of a block and pixel size are determined:
+
+        gameModeManager = GameObject.FindGameObjectWithTag("GameModeManager");
+        CreateWorld cW = gameModeManager.GetComponent<CreateWorld>();
+        pixelSize = cW.gridHorizontalPole.transform.lossyScale.x * cW.GridLinesFactor;
+        length = cW.GetSquareLength() - pixelSize;
+
+        //the number of pixels per snake block and the actual, accurate pixel size are determined:
+
+        pixelsNumber = UnityEngineExtensions.RoundToUnevenNumber(length / pixelSize);
+        pixelSize = length / pixelsNumber;
+
+        //Creates the template that can be instantiated for the creation of the snake block parents:
+
+        snakeBlockParentTemplate = GameObject.Instantiate(snakeBlockPrefab, new Vector3(20, 20, 20), Quaternion.identity) as GameObject;
+        snakeBlockParentTemplate.transform.localScale = Vector3.one;
+        snakeBlockParentTemplate.GetComponent<BoxCollider>().size = new Vector3(length, .4f, length);
+        snakeBlockParentTemplate.SetActive(false);
+        snakeBlockParentTemplate.transform.SetParent(parentOfSnakeBlocks.transform);
+
+        //Creates the template that can be duplicated for creating the actual pixel objects:
+
+        pixel = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        //Color colorOfTheSnake = DataSaver.Instance.GetSnakeColor().ConvertIntArrayIntoColor(); 
+        //pixel.GetComponent<Renderer>().material.SetColor("_EmissionColor", colorOfTheSnake);
+        //pixel.GetComponent<Renderer>().material.SetColor("_Color", colorOfTheSnake);
+        //pixel.AddComponent<SetSnakeColor>();
+        pixel.SetActive(false);
+        pixel.transform.SetParent(parentOfSnakeBlocks.transform);
+        pixel.transform.localScale = new Vector3(pixelSize, 1, pixelSize) ;
+        pixel.GetComponent<Collider>().enabled = false;
+
+        //sets the minimal position for the spawning iteration:
+
+        minPosition = (-(int)(pixelsNumber / 2) + 1) * pixelSize;
+
+        //optional print statements for debugging:
+        //print("PixelSize:" + pixelSize); print("LengthOfASquare:" + length);
+        //print("PixelsNumber" + pixelsNumber); print("minPosition:" + minPosition);
+    }
+
+    //methods for creating the pixeled objects if gridLines are off, but pixels on:
+
+    /// <summary>
+    /// Sets up all of the attributes regulating the spawning of pixeled objects that accord with each other graphically when the gridLines are off.
+    /// </summary>
+    public void SetupPixelsNoGridLines(GameObject snakeBlockPrefab, GameObject newParentOfSnakeBlocks)
+    {
+        parentOfSnakeBlocks = newParentOfSnakeBlocks;
+
+        //the length of a block and pixel size are determined:
+
+        gameModeManager = GameObject.FindGameObjectWithTag("GameModeManager");
+        CreateWorld cW = gameModeManager.GetComponent<CreateWorld>();
+        pixelSize = cW.GridLinesFactor * cW.gridHorizontalPole.transform.lossyScale.x;
+        length = cW.GetSquareLength();
+
+        //the number of pixels per snake block and the actual, accurate pixel size is determined:
+
+        pixelsNumber = UnityEngineExtensions.RoundToEvenNumber(length / pixelSize);
+        pixelSize = length / pixelsNumber;
+
+        //Creates the template that can be instantiated for the creation of the snake block parents:
+
+        snakeBlockParentTemplate = GameObject.Instantiate(snakeBlockPrefab, new Vector3(20, 20, 20), Quaternion.identity) as GameObject;
+        snakeBlockParentTemplate.transform.localScale = Vector3.one;
+        snakeBlockParentTemplate.GetComponent<BoxCollider>().size = new Vector3(length, .4f, length);
+        snakeBlockParentTemplate.SetActive(false);
+        snakeBlockParentTemplate.transform.SetParent(parentOfSnakeBlocks.transform);
+
+        //Creates the template that can be duplicated for creating the actual pixel objects:
+
+        pixel = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        //Color colorOfTheSnake = DataSaver.Instance.GetSnakeColor().ConvertIntArrayIntoColor(); 
+        //pixel.GetComponent<Renderer>().material.SetColor("_EmissionColor", colorOfTheSnake);
+        //pixel.GetComponent<Renderer>().material.SetColor("_Color", colorOfTheSnake);
+        //pixel.AddComponent<SetSnakeColor>();
+        pixel.SetActive(false);
+        pixel.transform.SetParent(parentOfSnakeBlocks.transform);
+        pixel.transform.localScale = new Vector3(pixelSize, 1, pixelSize);
+        pixel.GetComponent<Collider>().enabled = false;
+
+        //sets the minimal position for the spawning iteration:
+
+        minPosition = (-(pixelsNumber / 2) + 1) * pixelSize;
+
+        //optional print statements for debugging:
+        //Debug.Log("PixelSize:" + pixelSize); Debug.Log("LengthOfASquare:" + length);
+        //Debug.Log("PixelsNumber" + pixelsNumber); Debug.Log("minPosition:" + minPosition);
+    }
+
+    //methods for creating the pixeled objects independent of the gridLinesState:
+
+    /// <summary>
+    /// A new snake block is instantiated at the passed position. It is created as a pixeled object, the pixels are adapted to
+    /// the grid lines.
+    /// </summary>
+    /// <param name="position">The position as Vector3 where the new snake block should be spawned.</param>
+    /// <returns></returns>
+    public GameObject CreateNewBlockPixeled(Vector3 position)
+    {
+        //the parent of the pixels is created
+        //the parent will be referenced as snake block and execute all of the funtions, the pixels only move along
+
+        GameObject snakeBlockParent = GameObject.Instantiate(snakeBlockParentTemplate, position, Quaternion.identity) as GameObject;
+        snakeBlockParent.GetComponent<MeshRenderer>().enabled = false;
+        snakeBlockParent.transform.localScale = Vector3.one;
+        snakeBlockParent.GetComponent<Collider>().transform.localScale = new Vector3(length, .4f, length);
+        snakeBlockParent.SetActive(true);
+
+        //the actual pixel objects are created:
+
+        for (int i = 0; i < pixelsNumber / 2; i++)
+        {
+            for (int j = 0; j < pixelsNumber / 2; j++)
+            {
+                GameObject smallPixel = GameObject.Instantiate(pixel, Vector3.zero, Quaternion.identity) as GameObject;
+                smallPixel.transform.SetParent(snakeBlockParent.transform);
+                smallPixel.transform.localPosition = new Vector3(minPosition + 2 * i * pixelSize, 1,
+                                minPosition + 2 * j * pixelSize);
+                smallPixel.SetActive(true);
+                smallPixel.AddComponent<SetSnakeColor>();
+            }
+        }
+        return snakeBlockParent;
+    }
+
+    /// <summary>
+    /// Modifies the snake head object. It will be displayed pixeled.
+    /// </summary>
+    /// <param name="snakeHead">The snake head as game object.</param>
+    /// <param name="cubeLength">The length of a snake head block as flaot.</param>
+    public void ModifySnakeHeadPixeled(GameObject snakeHead)
+    {
+        //modify the existing snake-head object:
+
+        snakeHead.GetComponent<MeshRenderer>().enabled = false;
+        snakeHead.transform.localScale = Vector3.one;
+        snakeHead.GetComponent<BoxCollider>().size = new Vector3(length * 0.9f, 1, length * 0.9f);
+
+        //create pixel-children:
+
+        for (int i = 0; i < pixelsNumber / 2; i++)
+        {
+            for (int j = 0; j < pixelsNumber / 2; j++)
+            {
+                GameObject smallPixel = GameObject.Instantiate(pixel, Vector3.zero, Quaternion.identity) as GameObject;
+                smallPixel.transform.SetParent(snakeHead.transform);
+                smallPixel.transform.localPosition = new Vector3(minPosition + 2 * i * pixelSize, 1,
+                                minPosition + 2 * j * pixelSize);
+                smallPixel.SetActive(true);
+                smallPixel.AddComponent<SetSnakeColor>();
+            }
+        }
+        //snakeHead.GetComponent<SnakeBlockController>().SetColorChildren();
+    }
+
+    /// <summary>
+    /// Modifies the collecable objects. The collactable objects will be pixeled.
+    /// <param name="collectableParent">The collectable object that will be pixeled (and becomes the parent of the pixels).</param>
+    /// </summary>
+    public void ModifyCollectablePixeled(GameObject collectableParent)
+    {
+        collectableParent.GetComponent<MeshRenderer>().enabled = false;
+        collectableParent.transform.localScale = Vector3.one;
+        collectableParent.GetComponent<BoxCollider>().size = new Vector3(length, 1, length);
+        collectableParent.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeAll;
+
+        //create pixel-children:
+
+        for (int i = 0; i < pixelsNumber / 2; i++)
+        {
+            for (int j = 0; j < pixelsNumber / 2; j++)
+            {
+                GameObject smallPixel = GameObject.Instantiate(pixel, Vector3.zero, Quaternion.identity) as GameObject;
+                smallPixel.transform.SetParent(collectableParent.transform);
+                smallPixel.transform.localPosition = new Vector3(minPosition + 2 * i * pixelSize, .9f,
+                                minPosition + 2 * j * pixelSize);
+                smallPixel.SetActive(true);
+                smallPixel.AddComponent<SetCollectablesColor>();
+            }
+        }
     }
 }

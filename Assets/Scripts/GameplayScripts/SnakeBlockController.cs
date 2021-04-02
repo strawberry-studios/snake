@@ -16,19 +16,6 @@ public class SnakeBlockController : MonoBehaviour
     bool positionChanged; //is true if the position of the block was changed at least once so far (if previousPositionColumn and previousPositionRow exist)
     Color snakeColor, collectablesColor;
 
-    /// <summary>
-    /// The upper margin of the scree, also the minimal z position of all snake blocks.
-    /// </summary>
-    float minPositionZ;
-    /// <summary>
-    /// The left margin of the screen, also the minimal x position of all snake blocks.
-    /// </summary>
-    float minPositionX;
-    /// <summary>
-    /// The width of one square of the world.
-    /// </summary>
-    float fieldWidth;
-
     public GameObject Successor
         { get; set; }
 
@@ -40,20 +27,13 @@ public class SnakeBlockController : MonoBehaviour
         currentPositionRow = 0;
         Successor = null;
         positionChanged = false; //shows that there is no previous column position yet
-
-        Camera mainCamera = Camera.main;
-        float screenWidth = mainCamera.orthographicSize * mainCamera.aspect;
-        minPositionZ = mainCamera.orthographicSize;
-        minPositionX = -screenWidth;
-        fieldWidth = 2 * screenWidth / DataSaver.Instance.GetWorldSize();
-
         SetBlockColor();
     }
 
-    private void Start()
-    {
-     
-    }
+    //public void Start()
+    //{
+    //    SetBlockColor();
+    //}
 
     /// <summary>
     /// Sets the color of the blocks. The color is retrieved from an external file ('snakeColor').
@@ -67,19 +47,33 @@ public class SnakeBlockController : MonoBehaviour
     }
 
     /// <summary>
-    /// Moves the successor of a block and returns true once all of the blocks have moved.
+    /// If the block has any children, they're colored. The color is retrieved from an external file ('snakeColor').
     /// </summary>
-    public bool MoveSuccessor()
-    {
-        if (Successor != null)
-        {
-            Successor.GetComponent<SnakeBlockController>().SetPosition(GetComponent<SnakeBlockController>().GetPreviousRow(), GetComponent<SnakeBlockController>().GetPreviousColumn());
-            return Successor.GetComponent<SnakeBlockController>().MoveSuccessor();
-        }
-        else
-            return true;
+    //public void SetColorChildren()
+    //{
+    //    foreach(Transform t in gameObject.transform)
+    //    {
+    //        t.gameObject.AddComponent<SetSnakeColor>();
+    //    }
+    //}
+
+    ///// <summary>
+    ///// Moves the successor of a block and returns true once all of the blocks have moved.
+    ///// </summary>
+    //public bool MoveSuccessor()
+    //{
+    //    // print("current row" + GetCurrentRow());
+    //    // print("previous row" + GetPreviousRow());
+
+    //    if (Successor != null)
+    //    {
+    //        Successor.GetComponent<SnakeBlockController>().SetPosition(GetComponent<SnakeBlockController>().GetPreviousRow(), GetComponent<SnakeBlockController>().GetPreviousColumn());
+    //        return Successor.GetComponent<SnakeBlockController>().MoveSuccessor();
+    //    }
+    //    else
+    //        return true;
             
-    }
+    //}
 
     /// <summary>
     /// Converts two int values which describe a position of a block into an actual position in coordinates.
@@ -90,6 +84,10 @@ public class SnakeBlockController : MonoBehaviour
     /// <returns>Returns the position of the field as a Vector3</returns>
     public Vector3 ConvertIntsIntoPosition(int row, int column)
     {
+        float minPositionZ = gameModeManager.GetComponent<CreateWorld>().GetUpperMarginOfScreen();  
+        float minPositionX = gameModeManager.GetComponent<CreateWorld>().GetLeftMarginOfScreen(); 
+        float fieldWidth = gameModeManager.GetComponent<CreateWorld>().GetSquareLength();
+
         return new Vector3(minPositionX + (column - .5f) * fieldWidth, .2f, minPositionZ - (row - .5f) * fieldWidth);
     }
 
@@ -162,7 +160,7 @@ public class SnakeBlockController : MonoBehaviour
     /// </summary>
     /// <param name="row">int that determines the new row position of the block</param>
     /// <param name="column">int that determines the new column position of the block</param>
-    public void SetPosition(int row, int column)
+    public void SetPositionAndPreviousPosition(int row, int column)
     {
         if(positionChanged) //there is no current position yet at the beginning, so the previous position is only assigned from the second call of this method on
         {
@@ -177,6 +175,62 @@ public class SnakeBlockController : MonoBehaviour
         currentPositionRow = row;
         currentPositionColumn = column;
         transform.position = ConvertIntsIntoPosition(currentPositionRow, currentPositionColumn);
+    }
+
+    /// <summary>
+    /// The position of a block in the world scene is set.
+    /// The position of the block in world coordinates is also reset. 
+    /// </summary>
+    /// <param name="row">int that determines the new row position of the block</param>
+    /// <param name="column">int that determines the new column position of the block</param>
+    public void SetPositionInWorld(int row, int column)
+    {
+        transform.position = ConvertIntsIntoPosition(currentPositionRow, currentPositionColumn);
+    }
+
+    /// <summary>
+    /// The position and previous position of a block in world coordinates is set. The actual in-world position isn't altered.
+    /// The method is recursively called for all other blocks of the list.
+    /// </summary>
+    /// <param name="row">int that determines the new row position of the block</param>
+    /// <param name="column">int that determines the new column position of the block</param>
+    public void SetPositionInCoordinates(int row, int column)
+    {
+        currentPositionRow = row;
+        currentPositionColumn = column;
+
+        if (positionChanged) //there is no current position yet at the beginning, so the previous position is only assigned from the second call of this method on
+        {
+            previousPositionRow = currentPositionRow;
+            previousPositionColumn = currentPositionColumn;
+        }
+        else
+        {
+            positionChanged = true;
+        }
+
+        if (Successor != null)
+            Successor.GetComponent<SnakeBlockController>().SetPositionInCoordinates(previousPositionRow, previousPositionColumn);
+    }
+
+    /// <summary>
+    /// Sets the second last block as the new end of the snake. Returns the previous end. (This method is needed for moving the snake, 
+    /// it should only be called by the snake head.)
+    /// </summary>
+    /// <returns>Returns the current last block of the snake (which won't be the end of the snake any more after the execution of the method).</returns>
+    public GameObject SetNewLastBlock()
+    {
+        GameObject successorOfSuccessor = Successor.GetComponent<SnakeBlockController>().Successor;
+        if (successorOfSuccessor == null)
+        {
+            GameObject currentSuccessor = Successor;
+            Successor = null;
+            return currentSuccessor;
+        }
+        else
+        {
+            return Successor.GetComponent<SnakeBlockController>().SetNewLastBlock();
+        }
     }
 
     /// <summary>
@@ -207,6 +261,23 @@ public class SnakeBlockController : MonoBehaviour
             return 1;
         }
         
+    }
+
+    /// <summary>
+    /// Returns true if the snake length is greater than 2. When the method is called for the snake head the passed int 
+    /// MUST BE 1 and the method needs to be called by the snake head!
+    /// </summary>
+    /// <param name="currentLength">The current measured length.</param>
+    /// <returns></returns>
+    public bool IsSnakeLengthGreaterThan2(int currentLength)
+    {
+        if (currentLength > 2)
+            return true;
+
+        if (Successor != null)
+            return Successor.GetComponent<SnakeBlockController>().IsSnakeLengthGreaterThan2(currentLength + 1);
+        else
+            return false;
     }
 
     //methods that are needed for spawning a new collectible
@@ -242,3 +313,8 @@ public class SnakeBlockController : MonoBehaviour
         //GameObject.FindGameObjectWithTag("SnakeHead").GetComponent<SnakeHeadController>().PixelCollectable();
     }
 }
+/// <summary>
+    /// Returns 1 if passed true or -1 if passed false.
+    /// </summary>
+    /// <param name="myBool">Parameter value to pass.</param>
+    /// <returns>Returns an integer based on the passed value.</returns>
