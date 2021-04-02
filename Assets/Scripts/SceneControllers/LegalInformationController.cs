@@ -29,4 +29,13 @@ public class LegalInformationController : MonoBehaviour
     {
         Application.OpenURL("http://www.thestrawberrystudios.com/legal-information/privacy-policy");
     }
+
+    private void Update()
+    {
+        //check if user wants to go back to the 'more options' scene
+        if (Input.GetKeyUp(KeyCode.Escape))
+        {
+            Back();
+        }
+    }
 }

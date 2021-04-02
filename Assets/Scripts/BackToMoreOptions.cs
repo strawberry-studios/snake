@@ -12,4 +12,13 @@ public class BackToMoreOptions : MonoBehaviour
     {
         SceneManager.LoadScene("MoreOptions");
     }
+
+    private void Update()
+    {
+        //check if user wants to go back to the 'more options' scene
+        if (Input.GetKeyUp(KeyCode.Escape))
+        {
+            LoadMoreOptionsScene();
+        }
+    }
 }

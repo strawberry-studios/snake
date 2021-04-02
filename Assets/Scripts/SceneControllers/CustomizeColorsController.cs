@@ -98,6 +98,16 @@ public class CustomizeColorsController : MonoBehaviour
         LoadSnakeAndAppleColor();
     }
 
+    private void Update()
+    {
+        //check if user wants to go back to the last scene
+        if (Input.GetKeyUp(KeyCode.Escape))
+        {
+            Back();
+        }
+    }
+
+
     /// <summary>
     /// Toggles either all pixeled or all non-pixeled objects inactive depending on it whether the pixelMode is activated.
     /// (If pixelMode is activated all pixeled objects will remain visible, all others are deactivated; vice versa.)

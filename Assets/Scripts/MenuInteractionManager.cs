@@ -28,6 +28,16 @@ public class MenuInteractionManager : MonoBehaviour
         SetUpFullVersionUIs();
     }
 
+    private void Update()
+    {
+        //check if user wants to go back to the 'more options' scene
+        if (Input.GetKeyUp(KeyCode.Escape))
+        {
+            Application.Quit();
+        }
+    }
+
+
     /// <summary>
     /// Sets up the full version UIs. If the full version is unlocked the 'unlockFullVersionButton' is set inactive and the 'fullVersionUnlocked'
     /// text is set active. Elsewhise 'fullVersionUnlocked' text is set inactive and 'unlockFullVersionButton' is set active.

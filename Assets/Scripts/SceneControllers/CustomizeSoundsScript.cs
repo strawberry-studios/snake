@@ -48,6 +48,15 @@ public class CustomizeSoundsScript : MonoBehaviour
         blocker.SetActive(false);
     }
 
+    private void Update()
+    {
+        //check if user wants to go back to the last scene
+        if(Input.GetKeyUp(KeyCode.Escape))
+        {
+            Back();
+        }
+    }
+
     /// <summary>
     /// Plays one of the sounds that can be selected as 'collectApple' sound.
     /// </summary>

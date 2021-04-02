@@ -9,6 +9,15 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public class BackToMenu : MonoBehaviour
 {
+    private void Update()
+    {
+        //check if user wants to go back to menu
+        if (Input.GetKeyUp(KeyCode.Escape) && SceneManager.GetActiveScene().name != "Game")
+        {
+            ReturnToMenu();
+        }
+    }
+
     /// <summary>
     /// Loads the menu scene. (And closes the currently opened (one).)
     /// </summary>
