@@ -46,11 +46,6 @@ public class PreferencesController : MonoBehaviour
     /// Game object parenting all objects dealing with the vibration-settings.
     /// </summary>
     public GameObject vibrationSettings;
-    /// <summary>
-    /// Whether In-App Purchases are enabled or not. If enabled, the sounds can be customized if the Full Version was unlocked, elsewhise the 
-    /// button "Customize Sound" doens't exist.
-    /// </summary>
-    bool iAPsEnabled;
 
     private void Awake()
     {
@@ -68,7 +63,6 @@ public class PreferencesController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        iAPsEnabled = StaticValues.IAPsEnabled;
         soundController = GameObject.FindGameObjectWithTag("SoundController");
         timeUntilClosureOfInfoPanel = StaticValues.TimeUntilClosureOfInfoPanel;
         fadingTimeInfoPanel = StaticValues.FadingTimeInfoPanel;
@@ -224,13 +218,8 @@ public class PreferencesController : MonoBehaviour
     /// disabled by default.</param>
     void ToggleCustomizeSoundsButtonActive(bool active)
     {
-        if (iAPsEnabled)
-        {
-            if (customizeSoundsButton.activeInHierarchy != active)
-                customizeSoundsButton.SetActive(active);
-        }
-        else
-            customizeSoundsButton.SetActive(false);
+        if (customizeSoundsButton.activeInHierarchy != active)
+            customizeSoundsButton.SetActive(active);
     }
 
     //methods for displaying information on the info tabs:
@@ -335,15 +324,8 @@ public class PreferencesController : MonoBehaviour
         ToggleInfoPanelSize(false);
         ShowInfoButtons(false);
         infoHeader.text = "SOUNDS:";
-        if (iAPsEnabled)
-        {
-            infoText.text = "If this option is toggled on, sound effects will be played." +
-                "\nThey can even be customized if the full version was purchased.";
-        }
-        else
-        {
-            infoText.text = "If this option is toggled on, sound effects will be played.";
-        }
+        infoText.text = "If this option is toggled on, sound effects are played." +
+            "\nYou can even choose which sounds should be used.";
     }
 
     /// <summary>

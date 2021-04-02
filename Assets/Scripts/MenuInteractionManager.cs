@@ -7,26 +7,6 @@ using TMPro;
 
 public class MenuInteractionManager : MonoBehaviour
 {
-    /// <summary>
-    /// The text informing the player that the full version is unlocked.
-    /// </summary>
-    public TextMeshProUGUI fullVersionUnlockedText;
-    /// <summary>
-    /// The button with which the 'getFullVersion' scene can be loaded.
-    /// </summary>
-    public GameObject unlockFullVersionButton;
-
-    //private void OnGUI()
-    //{
-    //    if (GUI.Button(new Rect(100, 100, Screen.width / 2, Screen.height / 2), "notSetConsent"))
-    //        FullVersion.Instance.CollectionOfDataConsent = AdDataCollectionPermitted.notSet;
-    //}
-
-    private void Start()
-    {
-        //FullVersion.Instance.GetDeviceUniqueIdentifier();
-        SetUpFullVersionUIs();
-    }
 
     private void Update()
     {
@@ -37,33 +17,6 @@ public class MenuInteractionManager : MonoBehaviour
         }
     }
 
-
-    /// <summary>
-    /// Sets up the full version UIs. If the full version is unlocked the 'unlockFullVersionButton' is set inactive and the 'fullVersionUnlocked'
-    /// text is set active. Elsewhise 'fullVersionUnlocked' text is set inactive and 'unlockFullVersionButton' is set active.
-    /// </summary>
-    public void SetUpFullVersionUIs()
-    {
-        if (StaticValues.IAPsEnabled)
-        {
-            if (FullVersion.Instance.IsFullVersionUnlocked == FullVersionUnlocked.unlocked)
-            {
-                fullVersionUnlockedText.enabled = true;
-                unlockFullVersionButton.SetActive(false);
-                //title.transform.position = new Vector3(title.transform.position.x, title.transform.position.y + 15, title.transform.position.z); 
-            }
-            else
-            {
-                fullVersionUnlockedText.enabled = false;
-                unlockFullVersionButton.SetActive(true);
-            }
-        }
-        else
-        {
-            fullVersionUnlockedText.enabled = false;
-            unlockFullVersionButton.SetActive(false);
-        }
-    }
 
     //to be attached to buttons:
 
@@ -134,13 +87,4 @@ public class MenuInteractionManager : MonoBehaviour
         SceneManager.LoadScene("PurchaseFullVersion");
     }
 
-    ///// <summary>
-    ///// Returns 1 if passed true or -1 if passed false.
-    ///// </summary>
-    ///// <param name="myBool">Parameter value to pass.</param>
-    ///// <returns>Returns an integer based on the passed value.</returns>
-    //public bool FEW(bool myBool)
-    //{
-    //    return myBool;
-    //}
 }

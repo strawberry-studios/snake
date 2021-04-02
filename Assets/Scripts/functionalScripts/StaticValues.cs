@@ -8,42 +8,7 @@ using UnityEngine;
 /// </summary>
 public static class StaticValues 
 {
-    /// <summary>
-    /// Whether the store on which the app is published can be used with the Unity IAP API or not. If not, App Purchases and the full version are
-    /// not available.
-    /// </summary>
-    public static bool IAPsEnabled
-    {
-        //IF PUBLISHED ON A STORE WHICH SUPPORTS THE UNITY IAP API, UNCOMMENT:
-        get { return true; }
-
-        //IF PUBLISHED ON A STORE WHICH DOESN'T SUPPORT THE UNITY IAP API, UNCOMMENT:
-        //get { return false; }
-    }
-
-    ///// <summary>
-    ///// Whether the app will be published on the gooogle play store or not. Information is needed for setting up the IAPs. 
-    ///// If returning true, the IAPs are associated with the Play Store, if false, with Amazon App Store.
-    ///// </summary>
-    //public static bool targetGooglePlay
-    //{
-    //    //IF PUBLISHED ON GOOGLE PLAY, UNCOMMENT:
-    //    get { return true; }
-
-    //    //IF PUBLISHED ON AMAZON APP STORE, UNCOMMENT:
-    //    //get { return false; }
-    //}
-
-    /// <summary>
-    /// The string identifier of the full version. 
-    /// IMPORTANT: has to be pasted in the google play console as identifier of the "Full Version" product.
-    /// DON'T ALTER!
-    /// </summary>
-    public static string productIDFullVersion
-    {
-        get { return "com.strawberrystudios.snake.fullversion"; }
-    }
-
+ 
     /// <summary>
     /// The time until an info panel (UI image and text objects and their children) is closed.
     /// </summary>

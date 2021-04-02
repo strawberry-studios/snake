@@ -28,11 +28,6 @@ public class MoreOptionsController1 : MonoBehaviour
     /// The customizeSounds button as GameObject.
     /// </summary>
     public GameObject customizeSoundsButton;
-    /// <summary>
-    /// Whether In-App Purchases are enabled or not. If enabled, the sounds can be customized if the Full Version was unlocked, elsewhise the 
-    /// button "Customize Sound" doens't exist.
-    /// </summary>
-    bool iAPsEnabled;
 
     private void Awake()
     {
@@ -42,7 +37,6 @@ public class MoreOptionsController1 : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        iAPsEnabled = StaticValues.IAPsEnabled;
         soundController = GameObject.FindGameObjectWithTag("SoundController");
         timeUntilClosureOfInfoPanel = StaticValues.TimeUntilClosureOfInfoPanel;
         fadingTimeInfoPanel = StaticValues.FadingTimeInfoPanel;
@@ -85,17 +79,11 @@ public class MoreOptionsController1 : MonoBehaviour
     /// <summary>
     /// Toggles the 'customizeSounds' button (in)active.
     /// </summary>
-    /// <param name="active">The new activity status of the 'customizeSoundsButton'. Only if IAPs are enabled, elsewhise the button is 
-    /// disabled by default.</param>
+    /// <param name="active">The new activity status of the 'customizeSoundsButton'.</param>
     void ToggleCustomizeSoundsButtonActive(bool active)
     {
-        if (iAPsEnabled)
-        {
-            if (customizeSoundsButton.activeInHierarchy != active)
-                customizeSoundsButton.SetActive(active);
-        }
-        else
-            customizeSoundsButton.SetActive(false);
+        if(customizeSoundsButton.activeInHierarchy != active)
+         customizeSoundsButton.SetActive(active);
     }
 
     //methods that need to be assigned to buttons in the scene:
@@ -247,15 +235,8 @@ public class MoreOptionsController1 : MonoBehaviour
         ToggleInfoPanelActive(true);
         ShowInfoButtons(false);
         infoHeader.text = "SOUNDS:";
-        if (iAPsEnabled)
-        {
-            infoText.text = "If this option is toggled on, sound effects will be played." +
-                "\nThey can even be customized if the full version was purchased.";
-        }
-        else
-        {
-            infoText.text = "If this option is toggled on, sound effects will be played.";
-        }
+        infoText.text = "If this option is toggled on, sound effects are played." +
+            "\nYou can even choose which sounds should be used.";
     }
 
     /// <summary>
