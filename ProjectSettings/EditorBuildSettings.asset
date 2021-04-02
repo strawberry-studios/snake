@@ -30,6 +30,9 @@ EditorBuildSettings:
     path: Assets/Scenes/OptionsThemes/Difficulty.unity
     guid: 586bd09ff131fb74cb4231e4bb4cf19e
   - enabled: 1
+    path: Assets/Scenes/MoreOptionsScenes/PrivacySettings.unity
+    guid: 8c087d921355ec04dbf6f7c1abdbd4fb
+  - enabled: 1
     path: Assets/Scenes/OptionsThemes/Preferences.unity
     guid: caaeea38fdd139842a051d9f75e827d2
   - enabled: 1

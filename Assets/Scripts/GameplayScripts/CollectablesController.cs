@@ -16,8 +16,18 @@ public class CollectablesController : MonoBehaviour
         gameModeManager = GameObject.FindGameObjectWithTag("GameModeManager");
         transform.SetParent(actualGameComponents.GetOrAddEmptyGameObject("collectablesHolder").transform);
 
-        SetSize();
-        SetColor();
+        //depending on gridLinesOn state and showPixelsState the objects are pixeled or not
+
+        PlayerData data = DataSaver.Instance.RetrievePlayerDataFromFile();
+        if (data.GetShowPixels())
+        {
+            GameObject.FindGameObjectWithTag("SnakeHead").GetComponent<SnakeHeadController>().SpawnPixeledBlocks.ModifyCollectablePixeled(gameObject);
+        }
+        else
+        {
+            SetSize();
+            SetColor();
+        }
     }
 
     void SetColor()
@@ -35,6 +45,6 @@ public class CollectablesController : MonoBehaviour
     private void SetSize()
     {
         float cubeLength = gameModeManager.GetComponent<CreateWorld>().GetSquareLength();
-        transform.localScale = new Vector3(cubeLength, 0.3f, cubeLength);
+        transform.localScale = new Vector3(cubeLength, 0.4f, cubeLength);
     } 
 }

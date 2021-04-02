@@ -37,37 +37,13 @@ public class SpawnCollectablesSimplified : MonoBehaviour
     public int Columns
     { get; set; }
 
-    /// <summary>
-    /// Instead of Start(), this script uses StartUp, it is called by the 'SnakeHeadController', after the snake head was positioned, to make sure
-    /// that the order of events is correct.
-    /// </summary>
-    public void Start()
+    // Start is called before the first frame update
+    void Start()
     {
         Rows = GetComponent<CreateWorld>().GetRows();
         Columns = GetComponent<CreateWorld>().GetColumns();
         squares = GetSquares();
-        CreateFirstCollectable();
-    }
-
-    /// <summary>
-    /// The first collectable is created. It isn't created under the snake, even if 'delayedSpawnings' is toggled on.
-    /// </summary>
-    public void CreateFirstCollectable()
-    {
-        bool[,] currentlyOccupiedFields = new bool[Rows, Columns];
-        for(int r = 0; r < Rows; r++)
-        {
-            for (int c = 0; c < Columns; c++)
-                currentlyOccupiedFields[r, c] = false;
-        }
-        currentlyOccupiedFields[StaticValues.PlayerStartX-1, StaticValues.PlayerStartY-1] = true;
-        //print(StaticValues.PlayerStartX);
-        //print(StaticValues.PlayerStartY);
-
-        int freeSquares = squares - 1;
-
-        //one of the free fields is chosen randomly and a new collectible is spawned there:
-        InstantiateCollectable(currentlyOccupiedFields, freeSquares);
+        CreateNewCollectable();
     }
 
     /// <summary>
@@ -86,7 +62,28 @@ public class SpawnCollectablesSimplified : MonoBehaviour
         else
         {
             //one of the free fields is chosen randomly and a new collectible is spawned there:
-            InstantiateCollectable(currentlyOccupiedFields, freeSquares);
+            int spawnRow, spawnColumn;
+            int randomlyChosenField = 1 + (int)(Random.Range(0, freeSquares - 0.001f));
+            int counter = 0;
+            for (int i = 0; i < Rows; i++)
+            {
+                for (int k = 0; k < Columns; k++)
+                {
+                    counter += currentlyOccupiedFields[i, k] == false ? 1 : 0;
+                    if (randomlyChosenField == counter)
+                    {
+                        spawnRow = i + 1;
+                        spawnColumn = k + 1;
+                        counter++;
+                        GameObject collectable = Instantiate(collectablesPrefab, snakeHead.GetComponent<SnakeBlockController>().ConvertIntsIntoPosition(
+                                                    spawnRow, spawnColumn), Quaternion.identity);
+                        collectable.SetActive(true);
+                        break;
+                    }
+                    else if (counter > randomlyChosenField)
+                        break;
+                }
+            }
         }
     }
 
@@ -96,90 +93,27 @@ public class SpawnCollectablesSimplified : MonoBehaviour
     /// </summary>
     public void CreateNewCollectableDelayed()
     {
-        int snakeHeadColumn = snakeHead.GetComponent<SnakeBlockController>().GetCurrentColumn() - 1;
-        int snakeHeadRow = snakeHead.GetComponent<SnakeBlockController>().GetCurrentRow() - 1;
-
-        bool[,] currentlyOccupiedFields = new bool[Rows, Columns];
-        for (int r = 0; r < Rows; r++)
+        int rowsIndex = (int)Random.Range(0, Rows - 0.001f) + 1;  
+        int columnsIndex = (int)Random.Range(0, Columns - 0.001f) + 1;
+        Vector3 position = snakeHead.GetComponent<SnakeBlockController>().ConvertIntsIntoPosition(rowsIndex, columnsIndex);
+        
+        //spawn the new collectible if it doesn't have the same position as the snake head, if it has the same position the spawning should
+        //be delayed until the snake moved (block can also spawn under the snake, yet can only be collected by its head:
+        int snakeHeadColumn = snakeHead.GetComponent<SnakeBlockController>().GetCurrentColumn();
+        int snakeHeadRow = snakeHead.GetComponent<SnakeBlockController>().GetCurrentRow();
+        if (snakeHeadColumn == columnsIndex && snakeHeadRow == rowsIndex)
         {
-            for (int c = 0; c < Columns; c++)
-                currentlyOccupiedFields[r, c] = false;
-        }
-        currentlyOccupiedFields[snakeHeadRow, snakeHeadColumn] = true;
-        //print(snakeHeadRow);
-        //print(snakeHeadColumn);
-
-        int freeSquares = squares - snakeHead.GetComponent<SnakeBlockController>().CountCurrentBlocks();
-
-        if (freeSquares == 0)
-        {
-            snakeHead.GetComponent<SnakeHeadController>().Lose(true);
+            //Instantiate the new collectable once the snakeHead moved:
+            StartCoroutine(snakeHead.GetComponent<SnakeBlockController>().CreateNewCollectableDelayed(collectablesPrefab, position));
         }
         else
         {
-            InstantiateCollectable(currentlyOccupiedFields, freeSquares);
+            //Instantiate the new collectable immidiately:
+            GameObject collectable = Instantiate(collectablesPrefab, position, Quaternion.identity);
+            collectable.SetActive(true);
         }
     }
-
-    /// <summary>
-    /// Instantiates a new collectable at a randomly chosen position. The passed 2D-bool holds the squares where it can be spawned.
-    /// </summary>
-    /// <param name="freeSquares">The number of free squares in the world (where a new snake block can be spawned)</param>
-    /// <param name="currentlyOccupiedFields">A 2D-array that holds the information whether a square of the world is occupied or not (for 
-    /// each square of the world). The first index stands for the row, the second one for the column of the square.</param>
-    void InstantiateCollectable(bool[,] currentlyOccupiedFields, int freeSquares)
-    {
-        int spawnRow, spawnColumn;
-        int randomlyChosenField = 1 + (int)(Random.Range(0, freeSquares - 0.001f));
-        int counter = 0;
-        for (int i = 0; i < Rows; i++)
-        {
-            for (int k = 0; k < Columns; k++)
-            {
-                counter += currentlyOccupiedFields[i, k] == false ? 1 : 0;
-                if (randomlyChosenField == counter)
-                {
-                    spawnRow = i + 1;
-                    spawnColumn = k + 1;
-                    counter++;
-                    GameObject collectable = Instantiate(collectablesPrefab, snakeHead.GetComponent<SnakeBlockController>().ConvertIntsIntoPosition(
-                                                spawnRow, spawnColumn), Quaternion.identity);
-                    collectable.SetActive(true);
-                    break;
-                }
-                else if (counter > randomlyChosenField)
-                    break;
-            }
-        }
-    }
-
-    ///// <summary>
-    ///// Chooses any position randomly at which a new collectable will be spawned. The actual spawning takes place once the square is free (no longer
-    ///// occupied by one of the snake blocks).
-    ///// </summary>
-    //public void CreateNewCollectableDelayed()
-    //{
-    //    int rowsIndex = (int)Random.Range(0, Rows - 0.001f) + 1;  
-    //    int columnsIndex = (int)Random.Range(0, Columns - 0.001f) + 1;
-    //    Vector3 position = snakeHead.GetComponent<SnakeBlockController>().ConvertIntsIntoPosition(rowsIndex, columnsIndex);
-
-    //    //spawn the new collectible if it doesn't have the same position as the snake head, if it has the same position the spawning should
-    //    //be delayed until the snake moved (block can also spawn under the snake, yet can only be collected by its head:
-    //    int snakeHeadColumn = snakeHead.GetComponent<SnakeBlockController>().GetCurrentColumn();
-    //    int snakeHeadRow = snakeHead.GetComponent<SnakeBlockController>().GetCurrentRow();
-    //    if (snakeHeadColumn == columnsIndex && snakeHeadRow == rowsIndex)
-    //    {
-    //        //Instantiate the new collectable once the snakeHead moved:
-    //        StartCoroutine(snakeHead.GetComponent<SnakeBlockController>().CreateNewCollectableDelayed(collectablesPrefab, position));
-    //    }
-    //    else
-    //    {
-    //        //Instantiate the new collectable immidiately:
-    //        GameObject collectable = Instantiate(collectablesPrefab, position, Quaternion.identity);
-    //        collectable.SetActive(true);
-    //    }
-    //}
-
+    
     /// <summary>
     /// Returns the number of squares/fields of the world.
     /// </summary>
@@ -188,3 +122,116 @@ public class SpawnCollectablesSimplified : MonoBehaviour
         return Columns * Rows;
     }
 }
+
+
+/// <summary>
+/// This class provides methods for spawning pixeled blocks. None of these methods are executed on their won, 
+/// they're only called by other scripts (mainly 'SnakeHeadController')
+/// </summary>
+//public static class SpawnPixeledCollectables
+//{
+//    /// <summary>
+//    /// The game object which all game-managing scripts are attached to
+//    /// </summary>
+//    static GameObject gameModeManager;
+//    /// <summary>
+//    /// The size of the pixels, is approximately equal to the thickness of gridLines, if activated
+//    /// </summary>
+//    static float pixelSize;
+//    /// <summary>
+//    /// The length of a square of the world matrix (minus the thickness of the gridLines, if activated)
+//    /// </summary>
+//    static float length;
+//    /// <summary>
+//    /// The number of pixels which one snake block will consist of.
+//    /// </summary>
+//    static int pixelsNumber;
+//    /// <summary>
+//    /// The parent of the pixel objects which form a snake block as template to be instantiated.
+//    /// </summary>
+//    static GameObject snakeBlockParentTemplate;
+//    /// <summary>
+//    /// The minimal position where the first pixel is spawned. Required for the pixel spawning iteration.
+//    /// </summary>
+//    static float minPosition;
+//    /// <summary>
+//    /// The pixel template that can be duplicated for creating the single pixels of a snake block.
+//    /// </summary>
+//    static GameObject pixel;
+
+//    /// <summary>
+//    /// Sets up the necessary fields etc. for spawning snake blocks when pixel mode and the grid lines are activated.
+//    /// </summary>
+//    public void SetupPixelsAndGridLines(GameObject snakeBlockPrefab, GameObject parentOfSnakeBlocks)
+//    {
+//        //the length of a block and pixel size are determined:
+
+//        gameModeManager = GameObject.FindGameObjectWithTag("GameModeManager");
+//        CreateWorld cW = gameModeManager.GetComponent<CreateWorld>();
+//        pixelSize = cW.gridHorizontalPole.transform.lossyScale.x * cW.GridLinesFactor;
+//        length = cW.GetSquareLength() - pixelSize;
+
+//        //the number of pixels per snake block and the actual, accurate pixel size are determined:
+
+//        pixelsNumber = UnityEngineExtensions.RoundToUnevenNumber(length / pixelSize);
+//        pixelSize = length / pixelsNumber;
+
+//        //Creates the template that can be instantiated for the creation of the snake block parents:
+
+//        snakeBlockParentTemplate = GameObject.Instantiate(snakeBlockPrefab) as GameObject;
+//        snakeBlockParentTemplate.SetActive(false);
+//        snakeBlockParentTemplate.transform.SetParent(parentOfSnakeBlocks.transform);
+
+//        //Creates the template that can be duplicated for creating the actual pixel objects:
+
+//        pixel = GameObject.CreatePrimitive(PrimitiveType.Cube);
+//        //Color colorOfTheSnake = DataSaver.Instance.GetSnakeColor().ConvertIntArrayIntoColor(); 
+//        //pixel.GetComponent<Renderer>().material.SetColor("_EmissionColor", colorOfTheSnake);
+//        //pixel.GetComponent<Renderer>().material.SetColor("_Color", colorOfTheSnake);
+//        //pixel.AddComponent<SetSnakeColor>();
+//        pixel.SetActive(false);
+//        pixel.transform.SetParent(parentOfSnakeBlocks.transform);
+//        pixel.transform.localScale = new Vector3(pixelSize, 1, pixelSize);
+//        pixel.GetComponent<Collider>().isTrigger = true;
+
+//        //sets the minimal position for the spawning iteration:
+
+//        minPosition = (-(int)(pixelsNumber / 2) + 1) * pixelSize;
+
+//        //optional print statements for debugging:
+//        //print("PixelSize:" + pixelSize); print("LengthOfASquare:" + length);
+//        //print("PixelsNumber" + pixelsNumber); print("minPosition:" + minPosition);
+//    }
+
+
+//    /// <summary>
+//    /// Modifies the snake head object. If pixel mode is activated and if grid lines are on this method properly 'converts' the
+//    /// snake head into a pixeled snake head.
+//    /// </summary>
+//    /// <param name="snakeHead">The snake head as game object.</param>
+//    /// <param name="cubeLength">The length of a snake head block as flaot.</param>
+//    public void ModifySnakeHeadPixeledGridLines(GameObject snakeHead)
+//    {
+//        //modify the existing snake-head object:
+
+//        snakeHead.GetComponent<MeshRenderer>().enabled = false;
+//        snakeHead.transform.localScale = Vector3.one;
+//        snakeHead.GetComponent<BoxCollider>().size = new Vector3(length, 1, length);
+
+//        //create pixel-children:
+
+//        for (int i = 0; i < pixelsNumber / 2; i++)
+//        {
+//            for (int j = 0; j < pixelsNumber / 2; j++)
+//            {
+//                GameObject smallPixel = GameObject.Instantiate(pixel, Vector3.zero, Quaternion.identity) as GameObject;
+//                smallPixel.transform.SetParent(snakeHead.transform);
+//                smallPixel.transform.localPosition = new Vector3(minPosition + 2 * i * pixelSize, 1,
+//                                minPosition + 2 * j * pixelSize);
+//                smallPixel.SetActive(true);
+//                smallPixel.AddComponent<SetSnakeColor>();
+//            }
+//        }
+//        //snakeHead.GetComponent<SnakeBlockController>().SetColorChildren();
+//    }
+//}

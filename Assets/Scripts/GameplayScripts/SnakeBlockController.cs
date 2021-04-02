@@ -55,6 +55,11 @@ public class SnakeBlockController : MonoBehaviour
      
     }
 
+    //public void Start()
+    //{
+    //    SetBlockColor();
+    //}
+
     /// <summary>
     /// Sets the color of the blocks. The color is retrieved from an external file ('snakeColor').
     /// </summary>
@@ -67,10 +72,24 @@ public class SnakeBlockController : MonoBehaviour
     }
 
     /// <summary>
+    /// If the block has any children, they're colored. The color is retrieved from an external file ('snakeColor').
+    /// </summary>
+    //public void SetColorChildren()
+    //{
+    //    foreach(Transform t in gameObject.transform)
+    //    {
+    //        t.gameObject.AddComponent<SetSnakeColor>();
+    //    }
+    //}
+
+    /// <summary>
     /// Moves the successor of a block and returns true once all of the blocks have moved.
     /// </summary>
     public bool MoveSuccessor()
     {
+        // print("current row" + GetCurrentRow());
+        // print("previous row" + GetPreviousRow());
+
         if (Successor != null)
         {
             Successor.GetComponent<SnakeBlockController>().SetPosition(GetComponent<SnakeBlockController>().GetPreviousRow(), GetComponent<SnakeBlockController>().GetPreviousColumn());

@@ -16,7 +16,7 @@ public class GameOverManager : MonoBehaviour
     /// </summary>
     private ControlsMode currentControlsMode;
     public GameObject pauseButton, gameOverCanvas;
-    public Text gameOverScore, gameOverText;
+    public Text gameOverScore;
     public Text score;
     private int currentScore, scoreAsPermille, sqauresOfGamingArea;
     public GameObject snakeHead;
@@ -28,10 +28,6 @@ public class GameOverManager : MonoBehaviour
     /// game objects which are needed when 'swipes' are used for controlling the snake
     /// </summary>
     public GameObject swipeControllers;
-    /// <summary>
-    /// Object which has scripts attached to it that are used for controlling the direction.
-    /// </summary>
-    public GameObject directionController;
     /// <summary>
     /// The sound controller
     /// </summary>
@@ -74,15 +70,10 @@ public class GameOverManager : MonoBehaviour
 
     private void Update()
     {
-
-    }
-
-    /// <summary>
-    /// Enables the score UI. This method is called when the player starts the game by swiping/pressing a button.
-    /// </summary>
-    public void EnableScoreUIs()
-    {
-        score.GetComponent<Text>().enabled = true;
+        if(!score.GetComponent<Text>().enabled && snakeHead.GetComponent<SnakeHeadController>().GetDirection() != SnakeHeadController.DIRECTION.none)
+        {
+            score.GetComponent<Text>().enabled = true;
+        }
     }
 
     /// <summary>
@@ -97,23 +88,15 @@ public class GameOverManager : MonoBehaviour
             case ControlsMode.buttonsOnly:
                 directionControllingButtons.SetActive(true);
                 swipeControllers.SetActive(false);
-                directionController.GetComponent<SetDirectionManager>().keypadButtons.ToggleKeypadControllersActive(false);
                 break;
             case ControlsMode.swipeOnly:
                 directionControllingButtons.SetActive(false);
                 swipeControllers.SetActive(true);
-                directionController.GetComponent<SetDirectionManager>().keypadButtons.ToggleKeypadControllersActive(false);
                 StartCoroutine(IncreaseSize(swipeControllers.GetComponentInChildren<Text>()));
-                break;
-            case ControlsMode.keypad:
-                directionControllingButtons.SetActive(false);
-                swipeControllers.SetActive(false);
-                directionController.GetComponent<SetDirectionManager>().keypadButtons.ToggleKeypadControllersActive(true);
                 break;
             case ControlsMode.buttonsAndSwipe:
                 directionControllingButtons.SetActive(true);
                 swipeControllers.SetActive(false);
-                directionController.GetComponent<SetDirectionManager>().keypadButtons.ToggleKeypadControllersActive(false);
                 break;
         }
     }
@@ -134,18 +117,26 @@ public class GameOverManager : MonoBehaviour
     public void GameOver(bool won)
     {
         pauseButton.GetComponent<Canvas>().enabled = false;
-        PlayerData currentData = DataSaver.Instance.RetrievePlayerDataFromFile();
-        vibrationOn = currentData.VibrationsOn;
-        soundOn = currentData.SoundOn;
 
-        PlayGameOverSound(soundOn, won);
-        Vibrate(vibrationOn, won);
+        //ads are shown if they weren't removed (by purchasing the full version) 
+        //conditions: since the last ad was shown at least 40 blocks were collected, the ad is loaded, 
+        //the game wasn't won (collecting 100% of all blocks)
+        if (FullVersion.Instance.IsFullVersionUnlocked == FullVersionUnlocked.notUnlocked)
+        {
+            if (soundOn || vibrationOn)
+                ShowAds(won, playGameOverSoundDelegate, vibrateOnLoseDelegate);
+            else
+                ShowAds(won);
+        }
+        else
+        {
+            PlayGameOverSound(soundOn, won);
+            Vibration.Vibrate(1000);
+        }
 
         gameOverCanvas.GetComponent<Canvas>().enabled = true;
         SetNewHighscore();
         gameOverScore.text = "Score: " + ScoreConverter.ConvertPermilleScoreToPercentage(scoreAsPermille);
-        gameOverText.text = won ? "YOU WIN!" : "GAME OVER!";
-        Time.timeScale = 0;
     }
 
     /// <summary>
@@ -165,19 +156,39 @@ public class GameOverManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Makes the device vibrate if vibrationOn is set to true. The length of the played sound is 0.8s if lost, elsewhise 1 second.
+    /// Makes the device vibrate if vibrationOn is set to true and if the game wasn't won.
     /// </summary>
     /// <param name="vibrationOn">Whether the vibration is on.</param>
     /// <param name="won">Whether the game was won.</param>
     void Vibrate(bool vibrationOn, bool won)
     {
-        if (vibrationOn)
-        {
-            if (!won)
-                Vibration.Vibrate(800);
-            else
-                Vibration.Vibrate(1000);
-        }
+        if (!won)
+            Vibration.Vibrate(800);
+    }
+
+    /// <summary>
+    /// Shows either no ad, a banner ad, an interstitial video or a non-skippable video depending on the score of the last game.
+    /// </summary>
+    /// <param name="gameWon">Whether the game was won or not.</param>
+    private void ShowAds(bool gameWon)
+    {
+        FullVersion.Instance.ShowAdCounter += currentScore;
+        print(FullVersion.Instance.ShowAdCounter);
+        //not showing ads at the moment: AdManager.Instance.ShowVideoAdOnLose(gameWon);
+    }
+
+    /// <summary>
+    /// Shows either no ad, a banner ad, an interstitial video or a non-skippable video depending on the score of the last game.
+    /// If no ad is shown (i.e. because the game was won or if no ad should be shown yet), a game over sound is played.
+    /// </summary>
+    /// <param name="gameWon">Whether the game was won or not.</param>
+    /// <param name="playGameOverSound">A method which plays a game over sound if no ad will be shown.</param>
+    /// ///<param name="playVibration">A method which makes the device vibrate if no ad is shown.</param>
+    private void ShowAds(bool gameWon, SoundMethod playGameOverSound, SoundMethod playVibration)
+    {
+        FullVersion.Instance.ShowAdCounter += currentScore;
+        //print(FullVersion.Instance.ShowAdCounter);
+        //not showing ads at the moment: AdManager.Instance.ShowVideoAdOnLose(gameWon, playGameOverSound, playVibration);
     }
 
     /// <summary>
