@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
@@ -183,29 +181,6 @@ public class MoreOptionsController1 : MonoBehaviour
             CoroutinesSingleton.Instance.StopClosingUIObjectAutomatically();
     }
 
-    ///// <summary>
-    ///// Toggles the info panel (in)active. If it is toggled active, it will start fading after 'timeUntilClosureOfPanel' and it'll fade within
-    ///// 'FadingTimeInfoPanel'. When it is closed the invokes/coroutines closing it automatically are cancelled.
-    ///// Note: When the info panel is set active, all info buttons are set inactive (they're reactivated when the info panel is closed).
-    ///// The full version button is activated if the info panel is set active and 'showFullVersionButton' is set to true.
-    ///// </summary>
-    ///// <param name="newActivityStatus">The new activity status of the info panel.</param>
-    ///// <param name="showFullVersionButton">Whether the full version button should be set active or not.</param>
-    //public void ToggleInfoPanelActive(bool newActivityStatus, bool showFullVersionButton)
-    //{
-    //    infoPanel.SetActive(newActivityStatus);
-    //    blocker.SetActive(newActivityStatus);
-    //    ToggleInfoButtonsActive(!newActivityStatus);
-    //    if (newActivityStatus)
-    //    {
-    //        if (fullVersionButton.activeInHierarchy != showFullVersionButton)
-    //            fullVersionButton.SetActive(showFullVersionButton);
-    //        CoroutinesSingleton.Instance.CloseUIObjectAutomatically(infoPanel, TimeUntilClosureOfInfoPanel, FadingTimeInfoPanel, infoButtons, blocker);
-    //    }
-    //    else
-    //        CoroutinesSingleton.Instance.StopClosingUIObjectAutomatically();
-    //}
-
     /// <summary>
     /// Sets a certain amount of the buttons of the info panel active.
     /// </summary>
@@ -260,29 +235,15 @@ public class MoreOptionsController1 : MonoBehaviour
             g.SetActive(newActivity);
     }
 
-    /// <summary>
-    /// Shows a message which informs the player that they need to unlock the full version if they want to customize their own colors.
-    /// </summary>
-    void ShowCustomizingOptionLockedMessage()
-    {
-        ToggleInfoPanelActive(true);
-        ShowInfoButtons(true);
-        infoHeader.text = "LOCKED:";
-        infoText.text = "You need to unlock the full version to customize sound effects.";
-    }
-
     //to be attached to buttons:
 
     /// <summary>
-    /// Opens the 'CustomizeSounds' Scene, but only if the full version was already unlocked. Elsewhise the info panel is opened and informs 
-    /// the player that they need to unlock the full version.
+    /// Opens the 'CustomizeSounds' Scene.
     /// </summary>
     public void OpenCustomizeSounds()
     {
-        if (FullVersion.Instance.IsFullVersionUnlocked == FullVersionUnlocked.unlocked)
-            LoadCustomizeSoundsScene();
-        else
-            ShowCustomizingOptionLockedMessage();
+        DataSaver.Instance.LastEditedSound = LastEditedSound.moreOptions;
+        SceneManager.LoadScene("CustomizeSounds");
     }
 
     //methods for the scene interaction:
@@ -303,12 +264,4 @@ public class MoreOptionsController1 : MonoBehaviour
         SceneManager.LoadScene("LegalInformation");
     }
 
-    /// <summary>
-    /// Loads the 'CustomizeSounds' Scene.
-    /// </summary>
-    void LoadCustomizeSoundsScene()
-    {
-        DataSaver.Instance.LastEditedSound = LastEditedSound.moreOptions;
-        SceneManager.LoadScene("CustomizeSounds");
-    }
 }

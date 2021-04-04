@@ -87,17 +87,14 @@ public class CollectablesColorSkinsController : MonoBehaviour
         }
 
         /// <summary>
-        /// Loads the customizable colors from an external file, if the full version was unlocked.
+        /// Loads the customizable colors from an external file.
         /// </summary>
         public void LoadCustomizedColors()
         {
-            if (FullVersion.Instance.IsFullVersionUnlocked == FullVersionUnlocked.unlocked)
-            {
-                Color[] customColors = DataSaver.Instance.ColorsCustomized.Convert2DIntArrayToColorArray();
-                orange.GetComponent<Image>().color = customColors[0];
-                darkGreen.GetComponent<Image>().color = customColors[1];
-                faintRed.GetComponent<Image>().color = customColors[2];
-            }
+            Color[] customColors = DataSaver.Instance.ColorsCustomized.Convert2DIntArrayToColorArray();
+            orange.GetComponent<Image>().color = customColors[0];
+            darkGreen.GetComponent<Image>().color = customColors[1];
+            faintRed.GetComponent<Image>().color = customColors[2];
         }
 
     }
@@ -111,20 +108,17 @@ public class CollectablesColorSkinsController : MonoBehaviour
         public GameObject orange, darkGreen, faintRed;
 
         /// <summary>
-        /// Loads the customizable colors from an external file, if the full version was unlocked.
+        /// Loads the customizable colors from an external file.
         /// </summary>
         public void LoadCustomizedColors()
         {
-            if (FullVersion.Instance.IsFullVersionUnlocked == FullVersionUnlocked.unlocked)
-            {
-                Color[] customColors = DataSaver.Instance.ColorsCustomized.Convert2DIntArrayToColorArray();
-                foreach (Image g in orange.GetComponentsInChildren<Image>())
-                    g.GetComponent<Image>().color = customColors[0];
-                foreach (Image h in darkGreen.GetComponentsInChildren<Image>())
-                    h.GetComponent<Image>().color = customColors[1];
-                foreach (Image i in faintRed.GetComponentsInChildren<Image>())
-                    i.GetComponent<Image>().color = customColors[2];
-            }
+            Color[] customColors = DataSaver.Instance.ColorsCustomized.Convert2DIntArrayToColorArray();
+            foreach (Image g in orange.GetComponentsInChildren<Image>())
+                g.GetComponent<Image>().color = customColors[0];
+            foreach (Image h in darkGreen.GetComponentsInChildren<Image>())
+                h.GetComponent<Image>().color = customColors[1];
+            foreach (Image i in faintRed.GetComponentsInChildren<Image>())
+                i.GetComponent<Image>().color = customColors[2];
         }
     }
 
@@ -163,7 +157,7 @@ public class CollectablesColorSkinsController : MonoBehaviour
             lock2.transform.position = color2Transform.position;
             lock3.transform.position = color3Transform.position;
 
-            bool[] lockedStates = FullVersion.Instance.CustomColorUnlocked; //true means unlocked, false means locked
+            bool[] lockedStates = PlayerProgress.Instance.CustomColorUnlocked; //true means unlocked, false means locked
 
             lock1.SetActive(!lockedStates[0]);
             lock2.SetActive(!lockedStates[1]);
@@ -352,15 +346,6 @@ public class CollectablesColorSkinsController : MonoBehaviour
     }
 
     /// <summary>
-    /// Shows a message which informs the player that they need to unlock the full version if they want to customize their own colors.
-    /// </summary>
-    void ShowCustomizingOptionLockedMessage()
-    {
-        OpenInfoPanel();
-        infoPanelText.text = "YOU NEED TO UNLOCK THE FULL VERSION TO CUSTOMIZE YOUR OWN COLORS.";
-    }
-
-    /// <summary>
     /// Shows a message which informs the player that they can't select this color because it was already set as collectables color.
     /// </summary>
     public void ShowColorAlreadySelectedMessage()
@@ -369,24 +354,13 @@ public class CollectablesColorSkinsController : MonoBehaviour
         infoPanelText.text = "YOU CAN'T SELECT THIS COLOR. IT WAS ALREADY SET AS SNAKE COLOR.";
     }
 
-    /// <summary>
-    /// Loads the 'customizeColors' scene if the full version was unlocked, shows an error message elsewhise (saying the full version needs to 
-    /// be unlocked for customizing colors).
-    /// </summary>
-    public void OpenCustomizeColorsScene()
-    {
-        if (FullVersion.Instance.IsFullVersionUnlocked == FullVersionUnlocked.unlocked)
-            LoadCustomizeColorsScene();
-        else
-            ShowCustomizingOptionLockedMessage();
-    }
-
     //methods for interaction with other scenes:
 
+
     /// <summary>
-    /// Loads the 'CustomizeColors' Scene. Saves this scene (collectables color scene) as the last opened color-scene.
+    /// Loads the 'customizeColors' scene.
     /// </summary>
-    void LoadCustomizeColorsScene()
+    public void OpenCustomizeColorsScene()
     {
         DataSaver.Instance.LastCustomizedColor = LastEditedColor.collectable;
         SceneManager.LoadScene("CustomizeColors");

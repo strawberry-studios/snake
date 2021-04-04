@@ -17,10 +17,10 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/HighScores.unity
     guid: 756d66eb26c73f24aaae540715fc8fac
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/IAPs/PurchaseFullVersion.unity
     guid: 88eb79da74ab4234cbddc5042497aa8e
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/IAPs/RestoreFullVersion.unity
     guid: f3052d371e3fb1b4cb3d2c831b3a244e
   - enabled: 1

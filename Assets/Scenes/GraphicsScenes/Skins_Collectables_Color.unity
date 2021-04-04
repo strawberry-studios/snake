@@ -8513,7 +8513,6 @@ MonoBehaviour:
     lock2: {fileID: 137482862}
     lock3: {fileID: 712979111}
   infoPanelText: {fileID: 1585177709}
-  unlockFullVersionButton: {fileID: 0}
   blocker: {fileID: 546557009}
   customizeColorsButton: {fileID: 1845604230}
 --- !u!114 &664639401

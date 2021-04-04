@@ -13,13 +13,13 @@ public class SetupOfGame : MonoBehaviour
 
     void Start()
     {
-        if (FullVersion.Instance.IsGameFirstLoaded == GameFirstLoaded.firstLoaded)//!PlayerPrefs.HasKey("firstOpened"))
+        if (PlayerProgress.Instance.IsGameFirstLoaded == GameFirstLoaded.firstLoaded)//!PlayerPrefs.HasKey("firstOpened"))
         {
             SetUpPlayerData(); //also creates a new HighScoresData
 
             SceneInteractionData sceneInteractionData = SceneInteraction.Instance.RetrieveSceneInteractionDataFromFile(); //create if it doesn't exist yet
 
-            FullVersion.Instance.IsGameFirstLoaded = GameFirstLoaded.notFirstLoaded;
+            PlayerProgress.Instance.IsGameFirstLoaded = GameFirstLoaded.notFirstLoaded;
         }
         //highscore.text = "HIGHSCORE: " + DataSaver.Instance.GetHighscore() + "%";
     }

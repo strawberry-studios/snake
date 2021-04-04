@@ -241,17 +241,14 @@ public class SnakeColorSkinsController : MonoBehaviour
         }
 
         /// <summary>
-        /// Loads the customizable colors from an external file, if the full version was unlocked.
+        /// Loads the customizable colors from an external file.
         /// </summary>
         public void LoadCustomizedColors()
         {
-            if (FullVersion.Instance.IsFullVersionUnlocked == FullVersionUnlocked.unlocked)
-            {
-                Color[] customColors = DataSaver.Instance.ColorsCustomized.Convert2DIntArrayToColorArray();
-                orange.GetComponent<Image>().color = customColors[0];
-                darkGreen.GetComponent<Image>().color = customColors[1];
-                faintRed.GetComponent<Image>().color = customColors[2];
-            }
+            Color[] customColors = DataSaver.Instance.ColorsCustomized.Convert2DIntArrayToColorArray();
+            orange.GetComponent<Image>().color = customColors[0];
+            darkGreen.GetComponent<Image>().color = customColors[1];
+            faintRed.GetComponent<Image>().color = customColors[2];
         }
     }
 
@@ -268,16 +265,13 @@ public class SnakeColorSkinsController : MonoBehaviour
         /// </summary>
         public void LoadCustomizedColors()
         {
-            if (FullVersion.Instance.IsFullVersionUnlocked == FullVersionUnlocked.unlocked)
-            {
-                Color[] customColors = DataSaver.Instance.ColorsCustomized.Convert2DIntArrayToColorArray();
-                foreach (Image g in orange.GetComponentsInChildren<Image>())
-                    g.GetComponent<Image>().color = customColors[0];
-                foreach (Image h in darkGreen.GetComponentsInChildren<Image>())
-                    h.GetComponent<Image>().color = customColors[1];
-                foreach (Image i in faintRed.GetComponentsInChildren<Image>())
-                    i.GetComponent<Image>().color = customColors[2];
-            }
+            Color[] customColors = DataSaver.Instance.ColorsCustomized.Convert2DIntArrayToColorArray();
+            foreach (Image g in orange.GetComponentsInChildren<Image>())
+                g.GetComponent<Image>().color = customColors[0];
+            foreach (Image h in darkGreen.GetComponentsInChildren<Image>())
+                h.GetComponent<Image>().color = customColors[1];
+            foreach (Image i in faintRed.GetComponentsInChildren<Image>())
+                i.GetComponent<Image>().color = customColors[2];
         }
     }
 
@@ -311,7 +305,7 @@ public class SnakeColorSkinsController : MonoBehaviour
         {
             
             HighScoresData data = HighScores.Instance.RetrieveHighScoresDataFromFile();
-            bool[] lockedStates = FullVersion.Instance.CustomColorUnlocked;
+            bool[] lockedStates = PlayerProgress.Instance.CustomColorUnlocked;
 
             if (!lockedStates[0])
             {
@@ -333,7 +327,7 @@ public class SnakeColorSkinsController : MonoBehaviour
                     lockedStates[2] = true;
             }
 
-            FullVersion.Instance.CustomColorUnlocked = lockedStates;
+            PlayerProgress.Instance.CustomColorUnlocked = lockedStates;
         }
 
         /// <summary>
@@ -350,7 +344,7 @@ public class SnakeColorSkinsController : MonoBehaviour
             lock3.transform.position = color3Transform.position;
 
             
-            bool[] lockedStates = FullVersion.Instance.CustomColorUnlocked; //true means unlocked, false means locked
+            bool[] lockedStates = PlayerProgress.Instance.CustomColorUnlocked; //true means unlocked, false means locked
 
             lock1.SetActive(!lockedStates[0]);
             lock2.SetActive(!lockedStates[1]);
@@ -544,15 +538,6 @@ public class SnakeColorSkinsController : MonoBehaviour
     }
 
     /// <summary>
-    /// Shows a message which informs the player that they need to unlock the full version if they want to customize their own colors.
-    /// </summary>
-    void ShowCustomizingOptionLockedMessage()
-    {
-        OpenInfoPanel();
-        infoPanelText.text = "YOU NEED TO UNLOCK THE FULL VERSION TO CUSTOMIZE YOUR OWN COLORS.";
-    }
-
-    /// <summary>
     /// Shows a message which informs the player that they can't select this color because it was already set as collectables color.
     /// </summary>
     public void ShowColorAlreadySelectedMessage()
@@ -561,19 +546,18 @@ public class SnakeColorSkinsController : MonoBehaviour
         infoPanelText.text = "YOU CAN'T SELECT THIS COLOR. IT WAS ALREADY SET AS APPLE COLOR.";
     }
 
+
+    //methods that are required for scene interaction:
+
+
     /// <summary>
-    /// Loads the 'customizeColors' scene if the full version was unlocked, shows an error message elsewhise (saying the full version needs to 
-    /// be unlocked for customizing colors).
+    /// Loads the 'CustomizeColors' Scene. Saves this scene (snake color scene) as the last opened color-scene.
     /// </summary>
     public void OpenCustomizeColorsScene()
     {
-        if (FullVersion.Instance.IsFullVersionUnlocked == FullVersionUnlocked.unlocked)
-            LoadCustomizeColorsScene();
-        else
-            ShowCustomizingOptionLockedMessage();
+        DataSaver.Instance.LastCustomizedColor = LastEditedColor.snake;
+        SceneManager.LoadScene("CustomizeColors");
     }
-
-    //methods that are required for scene interaction:
 
     /// <summary>
     /// Loads the collectablesColor scene. Saves the collectables-color-scene as 'GraphicsSceneLastOpened' to an external file.
@@ -591,23 +575,6 @@ public class SnakeColorSkinsController : MonoBehaviour
     {
         SceneInteraction.Instance.GraphicsSceneLastOpened = GraphicsSceneLastOpened.graphicsSettings;
         SceneManager.LoadScene("GraphicsSettings");
-    }
-
-    /// <summary>
-    /// Loads the 'CustomizeColors' Scene. Saves this scene (snake color scene) as the last opened color-scene.
-    /// </summary>
-    void LoadCustomizeColorsScene()
-    {
-        DataSaver.Instance.LastCustomizedColor = LastEditedColor.snake;
-        SceneManager.LoadScene("CustomizeColors");
-    }
-
-    /// <summary>
-    /// Loads the scene where the full version can be purchased.
-    /// </summary>
-    public void LoadUnlockFullVersionScene()
-    {
-        SceneManager.LoadScene("PurchaseFullVersion");
     }
 
 }

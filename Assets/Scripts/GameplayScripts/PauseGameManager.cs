@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -103,7 +102,6 @@ public class PauseGameManager : MonoBehaviour
         Time.timeScale = 1.0f;
         if(SnakeHeadController.GameStarted)
             GetComponent<GameOverManager>().SetNewHighscore();
-        FullVersion.Instance.ShowAdCounter += GetComponent<GameOverManager>().GetScore();
         SceneManager.LoadScene("Game");
     }
 
@@ -115,7 +113,6 @@ public class PauseGameManager : MonoBehaviour
         Time.timeScale = 1.0f;
         if(SnakeHeadController.GameStarted)
             GetComponent<GameOverManager>().SetNewHighscore();
-        FullVersion.Instance.ShowAdCounter += GetComponent<GameOverManager>().GetScore();
         SceneManager.LoadScene("Menu");
     }
 }
