@@ -1,8 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using System;
 
 public class CustomizeColorsController : MonoBehaviour
 {
@@ -31,6 +30,38 @@ public class CustomizeColorsController : MonoBehaviour
     }
 
     /// <summary>
+    /// This class references three public lock objects. (They mark the customizable colors which will only be accessible after purchasing the 
+    /// full version.)
+    /// </summary>
+    [System.Serializable]
+    public class Locks
+    {
+        /// <summary>
+        /// One of the lock objects.
+        /// </summary>
+        public GameObject lock1, lock2, lock3;
+
+        /// <summary>
+        /// If a particular color wasn't unlocked yet, the respective lock is toggled active.
+        /// </summary>
+        /// <param name="color1Position">The position of one of the colors that requires unlocking.</param>
+        /// <param name="color2Position">The position of the second color that requires unlocking.</param>
+        /// <param name="color3Position">The position of the third color that requires unlocking.</param>
+        public void SetPositionOfLockObjects(Vector3 color1Position, Vector3 color2Position, Vector3 color3Position)
+        {
+            bool[] lockStates = PlayerProgress.Instance.UnlockCustomColors(); //true means unlocked, false means locked
+
+            lock1.transform.position = color1Position;
+            lock2.transform.position = color2Position;
+            lock3.transform.position = color3Position;
+
+            lock1.SetActive(!lockStates[0]);
+            lock2.SetActive(!lockStates[1]);
+            lock3.SetActive(!lockStates[2]);
+        }
+    }
+
+    /// <summary>
     /// Whether the pixel mode is on or not.
     /// </summary>
     bool pixelMode;
@@ -38,6 +69,10 @@ public class CustomizeColorsController : MonoBehaviour
     /// The three customizable colors.
     /// </summary>
     Color[] customizableColors;
+    /// <summary>
+    /// The parent objects of the 3 customizable colors.
+    /// </summary>
+    public GameObject[] colorGameObjects;
     /// <summary>
     /// The images in the scene which represent the customizable colors.
     /// </summary>
@@ -54,6 +89,10 @@ public class CustomizeColorsController : MonoBehaviour
     /// The pixeled image in the scene which represents the snake color.
     /// </summary>
     public GameObject snakeImagePixeled;
+    /// <summary>
+    /// The buttons to alter a custom color.
+    /// </summary>
+    public GameObject[] alterColorButtons;
     /// <summary>
     /// The image in the scene which represents the collectables (apple) color.
     /// </summary>
@@ -82,11 +121,40 @@ public class CustomizeColorsController : MonoBehaviour
     /// The color of the apple/snake.
     /// </summary>
     Color snakeColor, appleColor;
+    /// <summary>
+    /// The locks locking the customizable colors (if not unlocked yet).
+    /// </summary>
+    public Locks locks;
+
+    private int timeUntilClosureOfInfoPanel; //the time between opening an info panel and its closing (in millis)
+    private int fadingTimeInfoPanel; //the time during which the info panel fades off (once it starts disappearing, in millis)
+    public GameObject infoPanel; 
+    public Text infoPanelText;
+    /// <summary>
+    /// Transparent button covering the whole screen which 'blocks' any action while the info panel is opened. If pressed the info panel is closed.
+    /// </summary>
+    public GameObject blocker;
+
+
+
+    private void Awake()
+    {
+        SceneManager.sceneUnloaded += OnSceneExit;
+    }
+
+    /// <summary>
+    /// This method is always executed when the scene is unloaded.
+    /// </summary>
+    void OnSceneExit(Scene scene)
+    {
+        CoroutinesSingleton.Instance.StopClosingUIObjectAutomatically();
+    }
 
     // Start is called before the first frame update
     void Start()
     {
-        //PlayerProgress.Instance.IsFullVersionUnlocked = FullVersionUnlocked.unlocked;
+        timeUntilClosureOfInfoPanel = StaticValues.TimeUntilClosureOfInfoPanel;
+        fadingTimeInfoPanel = StaticValues.FadingTimeInfoPanel;
         data = DataSaver.Instance.RetrievePlayerDataFromFile();
         customPanel.panel.SetActive(false);
         pixelMode = data.GetShowPixels();
@@ -96,6 +164,8 @@ public class CustomizeColorsController : MonoBehaviour
         LoadCustomizableColors();
         ColorImagesInScene();
         LoadSnakeAndAppleColor();
+        locks.SetPositionOfLockObjects(colorsImages[0].transform.parent.position, colorsImages[1].transform.parent.position, colorsImages[2].transform.parent.position);
+        DisableAlterColorButton();
     }
 
     private void Update()
@@ -107,6 +177,19 @@ public class CustomizeColorsController : MonoBehaviour
         }
     }
 
+
+    void DisableAlterColorButton()
+    {
+        bool[] lockStates = PlayerProgress.Instance.UnlockCustomColors(); //true means a custom color is unlocked, false means locked
+
+        for (int i = 0; i < lockStates.Length; i++) {
+            try
+            {
+                alterColorButtons[i].SetActive(lockStates[i]);
+            }
+            catch (IndexOutOfRangeException ex) {};
+        }
+    }
 
     /// <summary>
     /// Toggles either all pixeled or all non-pixeled objects inactive depending on it whether the pixelMode is activated.
@@ -319,6 +402,54 @@ public class CustomizeColorsController : MonoBehaviour
     void LoadNewColor()
     {
         customPanel.currentColor.color = customizableColors[colorToBeAltered];
+    }
+
+    //info panel methods:
+
+    /// <summary>
+    /// Shows a message which informs the player that they need to unlock the full version if they want to select a certain locked color.
+    /// </summary>
+    /// <param name="indexOfColor">The index of the color that is currently locked and which can be unlocked by watching an ad. </param>
+    public void ShowCustomColorLockedMessage(int indexOfColor)
+    {
+        OpenInfoPanel();
+
+        switch (indexOfColor)
+        {
+            case 1:
+                infoPanelText.text = "THIS COLOR WASN'T UNLOCKED YET. \nSCORE AT LEAST 40% WITH MEDIUM DIFFICULTY TO UNLOCK IT!";
+                break;
+            case 2:
+                infoPanelText.text = "THIS COLOR WASN'T UNLOCKED YET. \nSCORE AT LEAST 10% WITH ULTIMATE DIFFICULTY TO UNLOCK IT!";
+                break;
+            case 3:
+                infoPanelText.text = "THIS COLOR WASN'T UNLOCKED YET. \nSCORE 100% WITH ANY DIFFICULTY TO UNLOCK IT!";
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Opens an info panel.
+    /// After 10 seconds it automatically closes again.
+    /// </summary>
+    public void OpenInfoPanel()
+    {
+        infoPanel.SetActive(true);
+        blocker.SetActive(true);
+        CoroutinesSingleton.Instance.CloseUIObjectAutomatically(infoPanel, timeUntilClosureOfInfoPanel, fadingTimeInfoPanel, null, blocker);
+    }
+
+    /// <summary>
+    /// Closes the info panel. (Which informs the player that they can't select the current collectables color.)
+    /// </summary>
+    public void CloseInfoPanel()
+    {
+        if (infoPanel.activeInHierarchy)
+        {
+            infoPanel.SetActive(false);
+            blocker.SetActive(false);
+            CoroutinesSingleton.Instance.StopClosingUIObjectAutomatically();
+        }
     }
 
     //methods for scene interaction:

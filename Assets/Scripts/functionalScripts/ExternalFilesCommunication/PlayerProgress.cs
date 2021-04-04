@@ -8,7 +8,7 @@ using System.IO;
 /// </summary>
 public class PlayerProgress : Singleton<PlayerProgress>
 {
-    
+
     /// <summary>
     /// Get or set whether the game was loaded for the first time.
     /// </summary>
@@ -26,7 +26,6 @@ public class PlayerProgress : Singleton<PlayerProgress>
             SavePlayerProgressDataToFile(data);
         }
     }
-
 
 
     /// <summary>
@@ -49,11 +48,46 @@ public class PlayerProgress : Singleton<PlayerProgress>
         }
     }
 
+
+    /// <summary>
+    /// Checks if the player achieved something to unlock a custom color that is currently locked.
+    /// If so, the info which colors were unlocked is persisted.
+    /// <returns>Returns the lock states of all custom colors (true means a color was unlocked)</returns>
+    /// </summary>
+    public bool[] UnlockCustomColors()
+    {
+        HighScoresData data = HighScores.Instance.RetrieveHighScoresDataFromFile();
+        bool[] lockedStates = CustomColorUnlocked;
+
+        if (!lockedStates[0])
+        {
+            if (data.GetHighScores(Difficulty.Medium)[0] >= 400)
+                lockedStates[0] = true;
+        }
+
+        if (!lockedStates[1])
+        {
+            if (data.GetHighScores(Difficulty.Ultimate)[0] >= 100)
+                lockedStates[1] = true;
+        }
+
+        if (!lockedStates[2])
+        {
+            if (data.GetHighScores(Difficulty.VeryEasy)[0] >= 1000 || data.GetHighScores(Difficulty.Easy)[0] >= 1000 ||
+                data.GetHighScores(Difficulty.Medium)[0] >= 1000 || data.GetHighScores(Difficulty.Hard)[0] >= 1000 ||
+                data.GetHighScores(Difficulty.VeryHard)[0] >= 1000 || data.GetHighScores(Difficulty.Ultimate)[0] >= 1000)
+                lockedStates[2] = true;
+        }
+
+        return CustomColorUnlocked = lockedStates;
+    }
+
+
     /// <summary>
     /// This method retrieves the fullVersion data from an external file where it is saved.
     /// </summary>
     /// <returns>It returns an object of the type PlayerProgressData which holds all of the full-verion-specific data.</returns>
-    public PlayerProgressData RetrievePlayerProgressDataFromFile()
+        public PlayerProgressData RetrievePlayerProgressDataFromFile()
     {
         BinaryFormatter bf = new BinaryFormatter();
 

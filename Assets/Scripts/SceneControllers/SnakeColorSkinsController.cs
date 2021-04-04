@@ -298,57 +298,24 @@ public class SnakeColorSkinsController : MonoBehaviour
         /// </summary>
         public GameObject lock1, lock2, lock3;
 
-        /// <summary>
-        /// Unlock all of the currently locked colors if the corresponding conditions were met. (only if IAPs are toggled off)
-        /// </summary>
-        public void UnlockLocks()
-        {
-            
-            HighScoresData data = HighScores.Instance.RetrieveHighScoresDataFromFile();
-            bool[] lockedStates = PlayerProgress.Instance.CustomColorUnlocked;
-
-            if (!lockedStates[0])
-            {
-                if (data.GetHighScores(Difficulty.Medium)[0] >= 400)
-                    lockedStates[0] = true;
-            }
-
-            if (!lockedStates[1])
-            {
-                if (data.GetHighScores(Difficulty.Ultimate)[0] >= 100)
-                    lockedStates[1] = true;
-            }
-
-            if (!lockedStates[2])
-            {
-                if (data.GetHighScores(Difficulty.VeryEasy)[0] >= 1000 || data.GetHighScores(Difficulty.Easy)[0] >= 1000 ||
-                    data.GetHighScores(Difficulty.Medium)[0] >= 1000 || data.GetHighScores(Difficulty.Hard)[0] >= 1000 ||
-                    data.GetHighScores(Difficulty.VeryHard)[0] >= 1000 || data.GetHighScores(Difficulty.Ultimate)[0] >= 1000)
-                    lockedStates[2] = true;
-            }
-
-            PlayerProgress.Instance.CustomColorUnlocked = lockedStates;
-        }
 
         /// <summary>
-        /// If the full version wasn't unlocked yet, all of the lock objects are set active and their positions are set to those of the 
-        /// passed transforms.
+        /// The lock objects are set active and cover their respective custom colors if they weren't unlocked yet.
         /// </summary>
         /// <param name="color1Transform">The transform of one of the colors that requires unlocking.</param>
         /// <param name="color2Transform">The transform of the second color that requires unlocking.</param>
         /// <param name="color3Transform">The transform of the third color that requires unlocking.</param>
         public void SetPositionOfLockObjects(Transform color1Transform, Transform color2Transform, Transform color3Transform)
         {
+            bool[] lockStates = PlayerProgress.Instance.UnlockCustomColors(); //true means unlocked, false means locked
+
             lock1.transform.position = color1Transform.position;
             lock2.transform.position = color2Transform.position;
             lock3.transform.position = color3Transform.position;
 
-            
-            bool[] lockedStates = PlayerProgress.Instance.CustomColorUnlocked; //true means unlocked, false means locked
-
-            lock1.SetActive(!lockedStates[0]);
-            lock2.SetActive(!lockedStates[1]);
-            lock3.SetActive(!lockedStates[2]);
+            lock1.SetActive(!lockStates[0]);
+            lock2.SetActive(!lockStates[1]);
+            lock3.SetActive(!lockStates[2]);
         }
     }
 
@@ -372,7 +339,7 @@ public class SnakeColorSkinsController : MonoBehaviour
     public GameObject colorsPixeled, colorsUnpixeled; //the parents of all colors in the scene (that can be selected by the player; (un)pixeled)
     public GameObject selectedColor; //the object which shows the currently selected color, unpixeled presentation
     public GameObject infoPanel; //an info panel informing the player that they can't select the current collectables color
-    public Locks locks; //the locks locking the customizable colors (if not unlocked via the full version yet)
+    public Locks locks; //the locks locking the customizable colors (if not unlocked yet)
     /// <summary>
     /// The text of the info panel.
     /// </summary>
@@ -402,16 +369,13 @@ public class SnakeColorSkinsController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        colorsPixeled.transform.localPosition -= new Vector3(0, 20, 0);
-        colorsUnpixeled.transform.localPosition -= new Vector3(0, 20, 0);
-
         timeUntilClosureOfInfoPanel = StaticValues.TimeUntilClosureOfInfoPanel;
         fadingTimeInfoPanel = StaticValues.FadingTimeInfoPanel;
         pixelsOn = DataSaver.Instance.GetShowPixels();
         infoPanel.SetActive(false);
         blocker.SetActive(false);
-        locks.UnlockLocks();
-        locks.SetPositionOfLockObjects(colors.orange.transform, colors.darkGreen.transform, colors.faintRed.transform) ;
+        locks.SetPositionOfLockObjects(colors.orange.transform, colors.darkGreen.transform, colors.faintRed.transform);
+        DisableCustomizeColorsButton();
         if (pixelsOn)
             pixeledColors.LoadCustomizedColors();
         colors.LoadCustomizedColors(); //always need to be loaded as their color is used for setting new colors, even if pixelMode is on
@@ -486,10 +450,26 @@ public class SnakeColorSkinsController : MonoBehaviour
         DataSaver.Instance.SetSnakeColor(newColor);
     }
 
+
+    /// <summary>
+    /// If no custom color was unlocked yet, the 'customize colors scene' can't be opened.
+    /// </summary>
+    void DisableCustomizeColorsButton()
+    {
+        foreach(bool lockState in PlayerProgress.Instance.CustomColorUnlocked)
+        {
+            if(lockState)
+            {
+                return;
+            }
+            customizeColorsButton.SetActive(false);
+        }
+    }
+
     //methods dealing with the info panel and displaying of information:
 
     /// <summary>
-    /// Opens an info panel. (Which informs the player that they can't select the current collectables color.)
+    /// Opens an info panel.
     /// After 10 seconds it automatically closes again.
     /// </summary>
     public void OpenInfoPanel()
@@ -497,7 +477,6 @@ public class SnakeColorSkinsController : MonoBehaviour
         infoPanel.SetActive(true);
         blocker.SetActive(true);
         CoroutinesSingleton.Instance.CloseUIObjectAutomatically(infoPanel, timeUntilClosureOfInfoPanel, fadingTimeInfoPanel, null, blocker);
-        //StartCoroutine(CloseInfoPanelAutomatically(10000));
     }
 
     /// <summary>
