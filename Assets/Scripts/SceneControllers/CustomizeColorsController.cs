@@ -70,10 +70,6 @@ public class CustomizeColorsController : MonoBehaviour
     /// </summary>
     Color[] customizableColors;
     /// <summary>
-    /// The parent objects of the 3 customizable colors.
-    /// </summary>
-    public GameObject[] colorGameObjects;
-    /// <summary>
     /// The images in the scene which represent the customizable colors.
     /// </summary>
     public Image[] colorsImages;
@@ -128,7 +124,7 @@ public class CustomizeColorsController : MonoBehaviour
 
     private int timeUntilClosureOfInfoPanel; //the time between opening an info panel and its closing (in millis)
     private int fadingTimeInfoPanel; //the time during which the info panel fades off (once it starts disappearing, in millis)
-    public GameObject infoPanel; 
+    public GameObject infoPanel;
     public Text infoPanelText;
     /// <summary>
     /// Transparent button covering the whole screen which 'blocks' any action while the info panel is opened. If pressed the info panel is closed.
@@ -164,7 +160,7 @@ public class CustomizeColorsController : MonoBehaviour
         LoadCustomizableColors();
         ColorImagesInScene();
         LoadSnakeAndAppleColor();
-        locks.SetPositionOfLockObjects(colorsImages[0].transform.parent.position, colorsImages[1].transform.parent.position, colorsImages[2].transform.parent.position);
+        LockColors();
         DisableAlterColorButton();
     }
 
@@ -177,7 +173,20 @@ public class CustomizeColorsController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Puts a lock object over each custom color that hasn't been unlocked yet.
+    /// </summary>
+    void LockColors() 
+    {
+        if(!pixelMode)
+            locks.SetPositionOfLockObjects(colorsImages[0].transform.parent.position, colorsImages[1].transform.parent.position, colorsImages[2].transform.parent.position);
+        else
+            locks.SetPositionOfLockObjects(colorsImagesPixeled[0].transform.parent.position, colorsImagesPixeled[1].transform.parent.position, colorsImagesPixeled[2].transform.parent.position);
+    }
 
+    /// <summary>
+    /// Disable all 'Alter Color' buttons of custom colors that weren't unlocked yet.
+    /// </summary>
     void DisableAlterColorButton()
     {
         bool[] lockStates = PlayerProgress.Instance.UnlockCustomColors(); //true means a custom color is unlocked, false means locked
@@ -347,11 +356,6 @@ public class CustomizeColorsController : MonoBehaviour
     /// </summary>
     public void ReloadOldColor()
     {
-        //int[] oldColor = new int[4] ;
-        //PlayerData oldData = DataSaver.Instance.RetrievePlayerDataFromFile();
-        //for (int i = 0; i < 4; i++)
-        //    oldColor[i] = oldData.ColorsCustomized[colorToBeAltered, i];
-        customPanel.currentColor.color = oldColor;//oldColor.ConvertIntArrayIntoColor();
         customizableColors[colorToBeAltered] = oldColor;
         LoadSliderValues(colorToBeAltered);
     }

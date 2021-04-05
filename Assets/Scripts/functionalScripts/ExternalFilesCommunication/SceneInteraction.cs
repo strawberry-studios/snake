@@ -114,9 +114,6 @@ public class SceneInteractionData
 {
     public SceneInteractionData()
     {
-        //Debug.Log(GraphicsSceneLastOpened);
-        //Debug.Log(OptionsSceneLastOpened);
-        //enum variables are never 0 and correspond to the first-declared option for their value, the following statements wouldn't really be necessary
         OptionsSceneLastOpened = OptionsSceneLastOpened.difficulty;
         GraphicsSceneLastOpened = GraphicsSceneLastOpened.graphicsSettings;
     }

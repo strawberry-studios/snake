@@ -91,9 +91,9 @@ public class PlayerProgress : Singleton<PlayerProgress>
     {
         BinaryFormatter bf = new BinaryFormatter();
 
-        if (File.Exists(Application.persistentDataPath + "/dontDeleteOrAlter.dat"))
+        if (File.Exists(Application.persistentDataPath + "/playerProgress.dat"))
         {
-            FileStream file = File.Open(Application.persistentDataPath + "/dontDeleteOrAlter.dat", FileMode.Open);
+            FileStream file = File.Open(Application.persistentDataPath + "/playerProgress.dat", FileMode.Open);
             PlayerProgressData data = (PlayerProgressData)bf.Deserialize(file);
             file.Close();
 
@@ -103,13 +103,13 @@ public class PlayerProgress : Singleton<PlayerProgress>
         {
             Debug.Log("Full version data couldn't be retrieved from the external file. Check whether the persistentDataPath " +
                 "addresses the right directory");
-            FileStream file = File.Create(Application.persistentDataPath + "/dontDeleteOrAlter.dat");
-            PlayerProgressData newFullVersionData = new PlayerProgressData();
+            FileStream file = File.Create(Application.persistentDataPath + "/playerProgress.dat");
+            PlayerProgressData newPlayerProgressData = new PlayerProgressData();
 
-            bf.Serialize(file, newFullVersionData);
+            bf.Serialize(file, newPlayerProgressData);
             file.Close();
 
-            return newFullVersionData;
+            return newPlayerProgressData;
         }
     }
 
@@ -121,7 +121,7 @@ public class PlayerProgress : Singleton<PlayerProgress>
     public void SavePlayerProgressDataToFile(PlayerProgressData toBeSaved)
     {
         BinaryFormatter bf = new BinaryFormatter();
-        FileStream file = File.Create(Application.persistentDataPath + "/dontDeleteOrAlter.dat");
+        FileStream file = File.Create(Application.persistentDataPath + "/playerProgress.dat");
 
         bf.Serialize(file, toBeSaved);
         file.Close();

@@ -592,14 +592,55 @@ public class PlayerData
     bool worldBoundaries, showPixels, delayedSpawnings, snakeHeadMarked, showGridLines;
     int[] snakePlayingColor, collectableColor; //arrays (of the length 4) holding the r,g,b,a values of a color
 
+    /// <summary>
+    /// Constructor with the default player settings.
+    /// </summary>
     public PlayerData()
     {
         snakePlayingColor = new int[4];
         collectableColor = new int[4];
-        //the following 2 variables always need to be assigned to certain values because the method 'SetPlayerSpeed' doesn't work otherwise:
-        speedSliderValue = 5;
-        worldSize = 12;
+        SetWorldSize(12);
+        SpeedSliderValue = 5;
         ColorsCustomized = new int [3, 4];
+        SaveCustomizedColors();
+
+        SetHighscore(0);
+        ToggleWorldBoundaries(false);
+        ShowPixels(false);
+        ToggleDelayedSpawnings(false);
+        SetCollectablesColor(Color.red);
+        SetSnakeColor(Color.green); 
+        ToggleSnakeHeadMarked(true);
+        ShowGridLines(false);
+        SoundOn = true;
+        VibrationsOn = false;
+        SwipesSensitivity = 0.5f;
+        LastCustomizedColor = LastEditedColor.snake;
+        ControlsModeActivated = ControlsMode.buttonsOnly;
+    }
+
+    /// <summary>
+    /// Sets default customizable colors.
+    /// </summary>
+    void SaveCustomizedColors()
+    {
+        //color 1 - orange:
+        ColorsCustomized[0, 0] = 245;
+        ColorsCustomized[0, 1] = 109;
+        ColorsCustomized[0, 2] = 0;
+        ColorsCustomized[0, 3] = 255;
+
+        //color 2 - dark green:
+        ColorsCustomized[1, 0] = 115;
+        ColorsCustomized[1, 1] = 125;
+        ColorsCustomized[1, 2] = 34;
+        ColorsCustomized[1, 3] = 255;
+
+        //color 3 - faint red:
+        ColorsCustomized[2, 0] = 186;
+        ColorsCustomized[2, 1] = 69;
+        ColorsCustomized[2, 2] = 69;
+        ColorsCustomized[2, 3] = 255;
     }
 
     /// <summary>
