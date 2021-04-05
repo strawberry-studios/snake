@@ -196,7 +196,7 @@ public class CustomizeColorsController : MonoBehaviour
             {
                 alterColorButtons[i].SetActive(lockStates[i]);
             }
-            catch (IndexOutOfRangeException ex) {};
+            catch (IndexOutOfRangeException) {};
         }
     }
 
