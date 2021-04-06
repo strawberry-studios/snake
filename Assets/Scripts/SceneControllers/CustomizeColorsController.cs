@@ -70,6 +70,10 @@ public class CustomizeColorsController : MonoBehaviour
     /// </summary>
     Color[] customizableColors;
     /// <summary>
+    /// The parents of the customizable color objects.
+    /// </summary>
+    public GameObject[] colors;
+    /// <summary>
     /// The images in the scene which represent the customizable colors.
     /// </summary>
     public Image[] colorsImages;
@@ -178,10 +182,7 @@ public class CustomizeColorsController : MonoBehaviour
     /// </summary>
     void LockColors() 
     {
-        if(!pixelMode)
-            locks.SetPositionOfLockObjects(colorsImages[0].transform.parent.position, colorsImages[1].transform.parent.position, colorsImages[2].transform.parent.position);
-        else
-            locks.SetPositionOfLockObjects(colorsImagesPixeled[0].transform.parent.position, colorsImagesPixeled[1].transform.parent.position, colorsImagesPixeled[2].transform.parent.position);
+        locks.SetPositionOfLockObjects(colors[0].transform.position, colors[1].transform.position, colors[2].transform.position);
     }
 
     /// <summary>

@@ -783,6 +783,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c65b5f58f5fd5504f845ec0695ab5791, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  colors:
+  - {fileID: 862990792}
+  - {fileID: 536420736}
+  - {fileID: 2130028884}
   colorsImages:
   - {fileID: 999781752}
   - {fileID: 2049011597}
