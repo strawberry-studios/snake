@@ -1,7 +1,5 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using TMPro;
 using UnityEngine.UI;
 
 /// <summary>
@@ -20,6 +18,7 @@ public class CoroutinesSingleton : Singleton<CoroutinesSingleton>
     /// </summary>
     GameObject blocker;
     private int blockerAlpha; //current alpha of the blocker image
+    bool blockerOn;
 
     /// <summary>
     /// This method only creates the 'Coroutines' Singleton, it doesn't execute any kind of command.
@@ -39,13 +38,18 @@ public class CoroutinesSingleton : Singleton<CoroutinesSingleton>
     /// <returns></returns>
     public void CloseUIObjectAutomatically(GameObject objectToBeClosed, int timeUntilClosing, int fadingDurationInMillis, GameObject[] objectsToBeOpened, GameObject newBlocker)
     {
-        objectToBeClosed.SetNewAlphaForObjectAndChildren(255);
+        //objectToBeClosed.SetNewAlphaForObjectAndChildren(255);
         fadingDuration = fadingDurationInMillis;
         objectToFade = objectToBeClosed;
         objectsToAvtivate = objectsToBeOpened;
         blocker = newBlocker;
-        if(blocker)
-            blockerAlpha = blocker.GetComponent<Image>() ? (int)(blocker.GetComponent<Image>().color.a * 255) : 140;
+
+        blockerOn = blocker ? blocker.GetComponent<Image>() : false;
+        print(blockerOn);
+        blockerAlpha = blockerOn ? (int) (blocker.GetComponent<Image>().color.a*255) : 140;
+        print(blockerAlpha);
+        //if(blocker)
+        //    blockerAlpha = blocker.GetComponent<Image>() ? (int)(blocker.GetComponent<Image>().color.a * 255) : 140;
         Invoke("StartUIFadingCoroutine", timeUntilClosing / 1000f);
     }
 
@@ -57,9 +61,7 @@ public class CoroutinesSingleton : Singleton<CoroutinesSingleton>
         if (objectToFade.activeInHierarchy)
         {
             StartCoroutine(FadeUIObject(objectToFade, fadingDuration));
-            //if (blocker.GetComponent<Image>() != null)
-              //  StartCoroutine(FadeBlocker((int)(fadingDuration*1.2f))); //the blocker should fade a little bit slower than the UI objects 
-        }   //the object fades within the passed time in millis
+        }
     }
 
     /// <summary>
@@ -72,69 +74,65 @@ public class CoroutinesSingleton : Singleton<CoroutinesSingleton>
     /// <returns></returns>
     IEnumerator FadeUIObject(GameObject objectToFade, int fadingTimeInMillis)
     {
-        float timeInterval = (fadingTimeInMillis / 51f); //the time after which at a time another contribution to the fading is made
-        int currentAlpha = 255; //the current alpha value of the object (when it reaches zero the object becomes fully transparent)
+        float startTime = Time.realtimeSinceStartup * 1000;
+        float fadingDurationSoFar = 0;
 
-        bool blockerOn;
-        if (blocker)
-            blockerOn = blocker.GetComponent<Image>() != null;
-        else
-            blockerOn = false;
-        float stepIteration = 0;
-        float currentBlockerAlpha = 140;
-        if (blockerOn)
+        //float timeInterval = (fadingTimeInMillis / 51f); //the time after which at a time another contribution to the fading is made
+        //int currentAlpha = 255; //the current alpha value of the object (when it reaches zero the object becomes fully transparent)
+
+        //float stepIteration = 0;
+        //float currentBlockerAlpha = 140;
+        //if (blockerOn)
+        //{
+        //    currentBlockerAlpha = blocker.GetComponent<Image>().color.a;
+        //    stepIteration = currentBlockerAlpha / 51;
+        //    blockerAlpha = (int)(currentBlockerAlpha*255);
+        //}
+
+        while(fadingDurationSoFar < fadingTimeInMillis && objectToFade.activeInHierarchy)
         {
-            currentBlockerAlpha = blocker.GetComponent<Image>().color.a;
-            stepIteration = currentBlockerAlpha / 51;
-            blockerAlpha = (int)(currentBlockerAlpha*255);
+            fadingDurationSoFar = (Time.realtimeSinceStartup * 1000) - startTime;
+            print(fadingDurationSoFar);
+
+            float transparencyFactor = 1 - (fadingDurationSoFar / fadingTimeInMillis);
+            objectToFade.SetNewAlphaForObjectAndChildren((int) (transparencyFactor*255));
+            if (blockerOn) 
+                blocker.GetComponent<Image>().SetNewAlphaForImage((int) (transparencyFactor*blockerAlpha));
+
+            yield return null;
         }
 
-        while (currentAlpha > 0 && objectToFade.activeInHierarchy)
-        {
-            objectToFade.SetNewAlphaForObjectAndChildren(currentAlpha);
-            currentAlpha -= 5;
-            if(blockerOn)
-            {
-                currentBlockerAlpha -= stepIteration;
-                blocker.GetComponent<Image>().SetNewAlphaForImage(currentBlockerAlpha);
-            }
-            yield return new WaitForSecondsRealtime(timeInterval / 1000f);
-        }
+        //while (currentAlpha > 0 && objectToFade.activeInHierarchy)
+        //{
+        //    objectToFade.SetNewAlphaForObjectAndChildren(currentAlpha);
+        //    currentAlpha -= 5;
+        //    if(blockerOn)
+        //    {
+        //        currentBlockerAlpha -= stepIteration;
+        //        blocker.GetComponent<Image>().SetNewAlphaForImage(currentBlockerAlpha);
+        //    }
+        //    yield return new WaitForSecondsRealtime(timeInterval / 1000f);
+        //}
+
         objectToFade.SetActive(false);
+        objectToFade.SetNewAlphaForObjectAndChildren(255);
+
         if (blockerOn)
         {
             blocker.GetComponent<Image>().SetNewAlphaForImage(blockerAlpha);
             blocker.SetActive(false);
         }
+        //if (blockerOn)
+        //{
+        //    blocker.GetComponent<Image>().SetNewAlphaForImage(blockerAlpha);
+        //    blocker.SetActive(false);
+        //}
         else if (blocker)
             blocker.SetActive(false);
         if(objectsToAvtivate != null)
             foreach (GameObject g in objectsToAvtivate)
                 g.SetActive(true);
-        objectToFade.SetNewAlphaForObjectAndChildren(255);
     }
-
-    ///// <summary>
-    ///// Fades a blocker object (an image) if it exists. The image fades within the passed time
-    ///// </summary>
-    ///// <param name="fadingDuration">The time until the image fades.</param>
-    ///// <returns></returns>
-    //IEnumerator FadeBlocker(int fadingDuration)
-    //{
-    //    int currentAlpha = (int)(blocker.GetComponent<Image>().color.a*255); //the current alpha value of the object (when it reaches zero the object becomes fully transparent)
-    //    int currentAlphaBlocker = currentAlpha;
-    //    float timeInterval = (fadingDuration / (float)(currentAlpha)); //the time after which at a time another contribution to the fading is made
-
-    //    while (currentAlpha > 0 && objectToFade.activeInHierarchy)
-    //    {
-    //        blocker.GetComponent<Image>().SetNewAlphaForImage(currentAlpha);
-    //        currentAlpha -= 1;  
-    //        yield return new WaitForSecondsRealtime(timeInterval / 1000f);
-    //    }
-
-    //    blocker.SetActive(false);
-    //    blocker.SetNewAlphaForObjectAndChildren(currentAlphaBlocker);
-    //}
 
     /// <summary>
     /// Stops the invoke which will close a UI object automatically. (Only if it's currently running.)
@@ -145,11 +143,20 @@ public class CoroutinesSingleton : Singleton<CoroutinesSingleton>
         CancelInvoke();
         StopAllCoroutines();
 
+        if(objectToFade)
+            objectToFade.SetNewAlphaForObjectAndChildren(255);
+
         if (blocker)
         {
-            Image g = blocker.GetComponent<Image>();
-            if (g)
-                g.SetNewAlphaForImage(blockerAlpha);
+            if (blockerOn)
+                blocker.GetComponent<Image>().SetNewAlphaForImage(blockerAlpha);
         }
+
+        //if (blocker)
+        //{
+        //    Image g = blocker.GetComponent<Image>();
+        //    if (g)
+        //        g.SetNewAlphaForImage(blockerAlpha);
+        //}
     }
 }
