@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 
 public class DifficultyController : MonoBehaviour
 {
-    public GameObject worldBoundariesToggle, delayedSpawningsToggle;
+    public GameObject worldBoundariesToggle, delayedSpawningsToggle, funModeToggle;
     public GameObject worldSizeSlider, speedSlider;
     public GameObject infoPanel;
     float originalInfoSizeY, originalInfoPositionY; //the original size of the rect transform of the info text
@@ -43,6 +43,7 @@ public class DifficultyController : MonoBehaviour
         fadingTimeInfoPanel = StaticValues.FadingTimeInfoPanel;
         LoadWorldBoundariesToggleState(worldBoundariesToggle);
         LoadDelayedSpawningsToggleState(delayedSpawningsToggle);
+        LoadFunModeToggleState(funModeToggle);
         LoadSpeedSliderState(speedSlider);
         LoadWorldSizeSliderState(worldSizeSlider);
         LoadCurrentDifficulty();
@@ -108,7 +109,7 @@ public class DifficultyController : MonoBehaviour
     /// <param name="toggle">The toggle-object (of which the position ahould be altered) as GameObject to pass</param>
     private void LoadWorldBoundariesToggleState(GameObject toggle)
     {
-            toggle.GetComponent<Toggle>().isOn = DataSaver.Instance.GetWorldBoundariesState() ? true : false;
+            toggle.GetComponent<Toggle>().isOn = DataSaver.Instance.GetWorldBoundariesState();
     }
 
     /// <summary>
@@ -117,7 +118,16 @@ public class DifficultyController : MonoBehaviour
     /// <param name="toggle">The toggle-object (of which the position should be altered) as GameObject to pass</param>
     private void LoadDelayedSpawningsToggleState(GameObject thisToggle)
     {
-        thisToggle.GetComponent<Toggle>().isOn = DataSaver.Instance.GetDelayedSpawningsState() ? true : false;
+        thisToggle.GetComponent<Toggle>().isOn = DataSaver.Instance.GetDelayedSpawningsState();
+    }
+
+    /// <summary>
+    /// Loads the value of 'funMode' and sets the state of the corresponding toggle.
+    /// </summary>
+    /// <param name="funModeToggle">The toggle-object (of which the position should be altered) as GameObject to pass</param>
+    private void LoadFunModeToggleState(GameObject funModeToggle)
+    {
+        funModeToggle.GetComponent<Toggle>().isOn = DataSaver.Instance.GetFunModeState();
     }
 
     //methods that need to be assigned to buttons in the scene:
@@ -156,6 +166,15 @@ public class DifficultyController : MonoBehaviour
     {
         DataSaver.Instance.SaveWorldBoundariesToggleState(state);
         LoadCurrentDifficulty();
+    }
+
+    /// <summary>
+    /// Determins if funMode's on or not.
+    /// </summary>
+    /// <param name="state">If funMode is on or not</param>
+    public void SetFunMode(bool state)
+    {
+        DataSaver.Instance.SaveFunModeToggleState(state);
     }
 
     /// <summary>
@@ -235,6 +254,17 @@ public class DifficultyController : MonoBehaviour
         ToggleInfoPanelSize(true);
         infoHeader.text = "WORLD BOUNDARIES:";
         infoText.text = "If this option is toggled on, you lose if the snake touches one of the margins of the world. \nThis makes the game more difficult.";
+    }
+
+    /// <summary>
+    /// Displays information about the 'funMode' option.
+    /// </summary>
+    public void InformAboutFunMode()
+    {
+        ToggleInfoPanelActive(true);
+        ToggleInfoPanelSize(false);
+        infoHeader.text = "FUN MODE:";
+        infoText.text = "In \bFun Mode\b the snake randomly loses some of its blocks that become obstacles. \nSee for yourself what happens!";
     }
 
     /// <summary>

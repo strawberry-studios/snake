@@ -233,6 +233,18 @@ public class DataSaver : Singleton<DataSaver>
     }
 
     /// <summary>
+    /// Saves the state of funMode as bool (i.e. true or  false) to an external file.
+    /// </summary>
+    /// <param name="delayedSpawningsOn">The new funMode state as bool to pass.</param>
+    public void SaveFunModeToggleState(bool funModeOn)
+    {
+        PlayerData data = RetrievePlayerDataFromFile();
+        data.ToggleFunMode(funModeOn);
+
+        SavePlayerDataToFile(data);
+    }
+
+    /// <summary>
     /// Saves the showPixels state as bool (i.e. true or false) to an external file.
     /// If true the objects (i.e. the snake and the world) should be displayed pixeled.
     /// </summary>
@@ -395,6 +407,21 @@ public class DataSaver : Singleton<DataSaver>
         else
         {
             Debug.Log("The delayedSpawnings state couldn't be retrieved from the external playerInfo file.");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Returns the current state of delayed spawninfgs as a bool from an external file.
+    /// </summary>
+    public bool GetFunModeState()
+    {
+        PlayerData data = RetrievePlayerDataFromFile();
+        if (data != null)
+            return data.GetFunModeState();
+        else
+        {
+            Debug.Log("The funMode state couldn't be retrieved from the external playerInfo file.");
             return false;
         }
     }
@@ -589,7 +616,7 @@ public class PlayerData
 {
     int highscore, worldSize, speed;
     int speedSliderValue;
-    bool worldBoundaries, showPixels, delayedSpawnings, snakeHeadMarked, showGridLines;
+    bool worldBoundaries, showPixels, delayedSpawnings, funMode, snakeHeadMarked, showGridLines;
     int[] snakePlayingColor, collectableColor; //arrays (of the length 4) holding the r,g,b,a values of a color
 
     /// <summary>
@@ -608,6 +635,7 @@ public class PlayerData
         ToggleWorldBoundaries(false);
         ShowPixels(false);
         ToggleDelayedSpawnings(false);
+        ToggleFunMode(false);
         SetCollectablesColor(Color.red);
         SetSnakeColor(Color.green); 
         ToggleSnakeHeadMarked(true);
@@ -783,6 +811,15 @@ public class PlayerData
     }
 
     /// <summary>
+    /// The fun mode is toggled on or off.
+    /// </summary>
+    /// <param name="funModeOn"></param>
+    public bool ToggleFunMode(bool funModeOn)
+    {
+        return funMode = funModeOn;
+    }
+
+    /// <summary>
     /// Sets show pixels.
     /// </summary>
     /// <param name="showPixelsOn">New state as bool to pass.</param>
@@ -895,6 +932,24 @@ public class PlayerData
     public bool GetDelayedSpawningsState()
     {
         return delayedSpawnings;
+    }
+
+    /// <summary>
+    /// Returns the current state of funMode as bool.
+    /// </summary>
+    public bool GetFunModeState()
+    {
+        try
+        {
+            Console.Out.WriteLine("Why is this working? " + funMode);
+            return funMode;
+        }
+        //exceptions are caught because this variable was added in an update -> the data of player's who updated their app may not have had the fun mode yet, it needs to be allocated first
+        catch (NullReferenceException ex)
+        {
+            Console.Out.WriteLine(ex.ToString());
+            return ToggleFunMode(false);
+        }
     }
 
     /// <summary>
