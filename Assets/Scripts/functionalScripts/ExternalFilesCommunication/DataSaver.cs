@@ -939,17 +939,7 @@ public class PlayerData
     /// </summary>
     public bool GetFunModeState()
     {
-        try
-        {
-            Console.Out.WriteLine("Why is this working? " + funMode);
-            return funMode;
-        }
-        //exceptions are caught because this variable was added in an update -> the data of player's who updated their app may not have had the fun mode yet, it needs to be allocated first
-        catch (NullReferenceException ex)
-        {
-            Console.Out.WriteLine(ex.ToString());
-            return ToggleFunMode(false);
-        }
+        return funMode;
     }
 
     /// <summary>
