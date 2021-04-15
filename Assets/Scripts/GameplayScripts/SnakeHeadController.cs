@@ -39,6 +39,10 @@ public class SnakeHeadController : MonoBehaviour
     /// True if no world boundaries exist, elsewhise false.
     /// </summary>
     bool noWorldBoundaries;
+    /// <summary>
+    /// If true the snake splits up randomly and parts of it become obstacles - that's fun ;)
+    /// </summary>
+    private bool funModeOn;
 
     /// <summary>
     /// Whether vibrations should be triggered when the player dies or not.
@@ -97,6 +101,7 @@ public class SnakeHeadController : MonoBehaviour
         delayedSpawnings = currentData.GetDelayedSpawningsState();
         vibrationOn = currentData.VibrationsOn;
         noWorldBoundaries = !DataSaver.Instance.GetWorldBoundariesState();
+        funModeOn = DataSaver.Instance.GetFunModeState();
     }
 
     /// <summary>
@@ -178,20 +183,6 @@ public class SnakeHeadController : MonoBehaviour
         }
     }
 
-    ///// <summary>
-    ///// This coroutine functions like an Update and is called every frame to check if a keypad button was pressed (to move the Snake).
-    ///// The effect only occurs if the coroutine was started in the 'Start' method (which only happens if the controls mode is 'keypad').
-    ///// </summary>
-    ///// <returns></returns>
-    //IEnumerator ControlSnakeWithKeypad()
-    //{
-    //    while(true)
-    //    {
-    //        directionManager.GetComponent<SetDirectionManager>().ChangeDirectionWithKeypad();
-    //        yield return null;
-    //    }
-    //}
-
     // Update is called once per frame
 
     void LateUpdate()
@@ -214,10 +205,17 @@ public class SnakeHeadController : MonoBehaviour
             }
             if (soundsOn)
                 soundController.GetComponent<SoundController>().PlayAppleCollected();
-            //IMPPRTANT: THE NEW BLOCK MUSTN'T BE CREATED BEFORE THE POSITION OF ALL OF THE BLOCKS OF THE SNAKE WAS UPDATED
-            //Otherwise the block might spawn in the middle of the snake or not at all (in the middle: SpawnCollectablesManager, 
-            //not at all: SpawnCollectiblesSimplified; but only when you collect 2 collectibles immidiately in a row
-            StartCoroutine(CreateNewBlock());
+
+            if (!funModeOn)
+            {
+                StartCoroutine(CreateNewBlock());
+            }
+            else
+            {
+                //if playing in fun mode:
+                StartCoroutine(CreateNewBlock());
+                SplitUpSnake();
+            }
         }
         if (other.gameObject.CompareTag("SnakeBlock"))
         {
@@ -471,5 +469,89 @@ public class SnakeHeadController : MonoBehaviour
             }
         }
         return GetComponent<SnakeBlockController>().DetermineOccupiedFields(currentlyOccupiedFields);
+    }
+
+
+    //fun mode methods:
+
+
+    /// <summary>
+    /// Randomly determines if (and how) the snake should be split up. 
+    /// If it is split up, a few blocks are disconnected from the main part of the snake, become obstacles, and just stay where they are.
+    /// </summary>
+    private void SplitUpSnake()
+    {
+        int length = GetLength();
+
+        if(length >= 2)
+        {
+            float randomNumber = Random.value;
+
+            if(length == 3)
+            {
+                if(randomNumber < 0.2)
+                {
+                    RemoveSnakeBlocks(1, length);
+                }
+            }
+            else if(length == 4)
+            {
+                if(randomNumber < 0.2)
+                {
+                    RemoveSnakeBlocks(1, length);
+                }
+                else if(randomNumber < 0.5)
+                {
+                    RemoveSnakeBlocks(2, length);
+                }
+            }
+            else
+            {
+                if (randomNumber < 0.25)
+                {
+                    RemoveSnakeBlocks(1, length);
+                }
+                else if (randomNumber < 0.45)
+                {
+                    RemoveSnakeBlocks(2, length);
+                }
+                else if (randomNumber < 0.7)
+                {
+                    RemoveSnakeBlocks(3, length);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Removes all snake blocks from the snake that come after the new end.
+    /// </summary>
+    /// <param name="numberOfBlocksToBeRemoved">Number of blocks that should be removed from the snake. (Always starting from the end of the snake)</param>
+    /// <param name="length">The length of the snake.</param>
+    private void RemoveSnakeBlocks(int numberOfBlocksToBeRemoved, int length)
+    {
+        int ordinalNumberNewEnd = length - numberOfBlocksToBeRemoved - 1;
+        GameObject newEnd = GetBlockWithOrdinalNumber(ordinalNumberNewEnd);
+        newEnd.GetComponent<SnakeBlockController>().Successor = null;
+        end = newEnd;
+    }
+
+    /// <summary>
+    /// Returns the current length of the snake.
+    /// </summary>
+    /// <returns>Current length of the snake.</returns>
+    private int GetLength()
+    {
+        return GetComponent<SnakeBlockController>().GetCurrentLength();
+    }
+
+    /// <summary>
+    /// Determines and returns the snake block on the given position.
+    /// </summary>
+    /// <param name="ordinalNumber">The ordinal number of the snake block that should be returned. (The snake head has the ordinal number 0)</param>
+    /// <returns></returns>
+    private GameObject GetBlockWithOrdinalNumber(int ordinalNumber)
+    {
+        return GetComponent<SnakeBlockController>().GetBlockNBlocksBehind(ordinalNumber);
     }
 }

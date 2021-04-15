@@ -139,6 +139,38 @@ public class SnakeBlockController : MonoBehaviour
     }
 
     /// <summary>
+    /// Recursively determines and returns the length of the snake if called by the Snake head.
+    /// Elsewhise only returns the length from this block to the end of the Snake.
+    /// </summary>
+    /// <returns>The length of the Snake.</returns>
+    public int GetCurrentLength()
+    {
+        if(Successor != null)
+        {
+            return Successor.GetComponent<SnakeBlockController>().GetCurrentLength() + 1;
+        }
+        return 1;
+    }
+
+    /// <summary>
+    /// Determines and returns the block which is n blocks behind the current one. If 0 is passed this block is returned.
+    /// </summary>
+    public GameObject GetBlockNBlocksBehind(int n)
+    {
+        if(n == 0)
+        {
+            return this.gameObject;
+        }
+        else
+        {
+            if (Successor != null)
+                return Successor.GetComponent<SnakeBlockController>().GetBlockNBlocksBehind(n - 1);
+            else
+                return null; //no block can be returned because the snake isn't long enough
+        }
+    }
+
+    /// <summary>
     /// Sets the current column position of the block.
     /// </summary>
     /// <param name="newColumn">the new column as int to pass</param>
