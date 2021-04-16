@@ -96,7 +96,7 @@ public class SnakeBlockController : MonoBehaviour
     /// <summary>
     /// Returns the previous row position of the block.
     /// </summary>
-    /// <returns>Returns the previous row as a float</returns>
+    /// <returns>Returns the previous row</returns>
     public int GetPreviousRow()
     {
         return previousPositionRow;
@@ -105,7 +105,7 @@ public class SnakeBlockController : MonoBehaviour
     /// <summary>
     /// Returns the current row position of the block.
     /// </summary>
-    /// <returns>Returns the current row as a float</returns>
+    /// <returns>Returns the current row</returns>
     public int GetCurrentRow()
     {
         return currentPositionRow;
@@ -123,7 +123,7 @@ public class SnakeBlockController : MonoBehaviour
     /// <summary>
     /// Returns the previous column position of the block.
     /// </summary>
-    /// <returns>Returns the previous column as a float</returns>
+    /// <returns>Returns the previous column</returns>
     public int GetPreviousColumn()
     {
         return previousPositionColumn;
@@ -132,7 +132,7 @@ public class SnakeBlockController : MonoBehaviour
     /// <summary>
     /// Returns the current column position of the block.
     /// </summary>
-    /// <returns>Returns the current column as a float</returns>
+    /// <returns>Returns the current column</returns>
     public int GetCurrentColumn()
     {
         return currentPositionColumn;
@@ -168,6 +168,17 @@ public class SnakeBlockController : MonoBehaviour
             else
                 return null; //no block can be returned because the snake isn't long enough
         }
+    }
+
+    /// <summary>
+    /// Returns a list of GameObjects including this block and all of its successors.
+    /// </summary>
+    /// <param name="list">The list to which this block and its successors should be added.</param>
+    public List<GameObject> GetBlockAndSuccessors(List<GameObject> list)
+    {
+        list.Add(this.gameObject);
+
+        return Successor != null ? Successor.GetComponent<SnakeBlockController>().GetBlockAndSuccessors(list) : list;
     }
 
     /// <summary>

@@ -76,18 +76,11 @@ public class SpawnCollectablesSimplified : MonoBehaviour
     public void CreateNewCollectable()
     {
         bool[,] currentlyOccupiedFields = snakeHead.GetComponent<SnakeHeadController>().StartDeterminingOccupiedFields(); //holds the information
-                             // whether a field is occupied by the snake or not for each field (first index =^ rows, second index =^ columns)
-        //checks whether the game is won and therefore over:
-        int freeSquares = squares - snakeHead.GetComponent<SnakeBlockController>().CountCurrentBlocks();
-        if (freeSquares == 0)
-        {
-            snakeHead.GetComponent<SnakeHeadController>().Lose(true);
-        }
-        else
-        {
-            //one of the free fields is chosen randomly and a new collectible is spawned there:
-            InstantiateCollectable(currentlyOccupiedFields, freeSquares);
-        }
+                                                                                                                          // whether a field is occupied by the snake or not for each field (first index =^ rows, second index =^ columns)
+
+        AddObstaclesToOccupiedFields(currentlyOccupiedFields);
+
+        InstantiateCollectableOrWin(currentlyOccupiedFields);
     }
 
     /// <summary>
@@ -106,10 +99,33 @@ public class SpawnCollectablesSimplified : MonoBehaviour
                 currentlyOccupiedFields[r, c] = false;
         }
         currentlyOccupiedFields[snakeHeadRow, snakeHeadColumn] = true;
-        //print(snakeHeadRow);
-        //print(snakeHeadColumn);
 
-        int freeSquares = squares - snakeHead.GetComponent<SnakeBlockController>().CountCurrentBlocks();
+        AddObstaclesToOccupiedFields(currentlyOccupiedFields);
+
+        InstantiateCollectableOrWin(currentlyOccupiedFields);
+    }
+
+    /// <summary>
+    /// If fun mode is on, some snake blocks may have become obstacles (and no obstacles should be spawned there)
+    /// </summary>
+    /// <param name="occupiedFields"></param>
+    private void AddObstaclesToOccupiedFields(bool[,] occupiedFields)
+    {
+        print("number of obstacles: " + snakeHead.GetComponent<SnakeHeadController>().ObstacleBlocks.Count);
+        foreach (GameObject obstacle in snakeHead.GetComponent<SnakeHeadController>().ObstacleBlocks)
+        {
+            occupiedFields[obstacle.GetComponent<SnakeBlockController>().GetCurrentRow() - 1, obstacle.GetComponent<SnakeBlockController>().GetCurrentColumn() - 1] = true;
+            print("Obstacle: Row: " + obstacle.GetComponent<SnakeBlockController>().GetCurrentRow() + " Column: " + obstacle.GetComponent<SnakeBlockController>().GetCurrentColumn());
+        }
+    }
+
+    /// <summary>
+    /// Instantiates a new collectable if game wasn't won yet. Elsewhise initiates the winning.
+    /// </summary>
+    /// <param name="occupiedFields">All fields of the playing are - those that are allocated 'true' are occupied and nothing can be spawned there.</param>
+    private void InstantiateCollectableOrWin(bool[,] occupiedFields)
+    {
+        int freeSquares = squares - snakeHead.GetComponent<SnakeBlockController>().CountCurrentBlocks() - snakeHead.GetComponent<SnakeHeadController>().ObstacleBlocks.Count;
 
         if (freeSquares == 0)
         {
@@ -117,7 +133,7 @@ public class SpawnCollectablesSimplified : MonoBehaviour
         }
         else
         {
-            InstantiateCollectable(currentlyOccupiedFields, freeSquares);
+            InstantiateCollectable(occupiedFields, freeSquares);
         }
     }
 

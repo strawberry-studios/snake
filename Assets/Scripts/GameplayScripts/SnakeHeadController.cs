@@ -66,6 +66,13 @@ public class SnakeHeadController : MonoBehaviour
     GameObject soundController;
 
     /// <summary>
+    /// List of all snake blocks that have become obstacles. 
+    /// Only needed in fun mode.
+    /// </summary>
+    public List<GameObject> ObstacleBlocks
+    { get; set; }
+
+    /// <summary>
     /// Whether the player has already made the first move or not.
     /// </summary>
     public static bool GameStarted
@@ -78,6 +85,7 @@ public class SnakeHeadController : MonoBehaviour
     {
         get; set;
     }
+
 
     // Start is called before the first frame update
     void Start()
@@ -102,6 +110,7 @@ public class SnakeHeadController : MonoBehaviour
         vibrationOn = currentData.VibrationsOn;
         noWorldBoundaries = !DataSaver.Instance.GetWorldBoundariesState();
         funModeOn = DataSaver.Instance.GetFunModeState();
+        ObstacleBlocks = new List<GameObject>();
     }
 
     /// <summary>
@@ -206,16 +215,10 @@ public class SnakeHeadController : MonoBehaviour
             if (soundsOn)
                 soundController.GetComponent<SoundController>().PlayAppleCollected();
 
-            if (!funModeOn)
-            {
-                StartCoroutine(CreateNewBlock());
-            }
-            else
-            {
-                //if playing in fun mode:
-                StartCoroutine(CreateNewBlock());
+            if (funModeOn)
                 SplitUpSnake();
-            }
+
+            StartCoroutine(CreateNewBlock());
         }
         if (other.gameObject.CompareTag("SnakeBlock"))
         {
@@ -398,21 +401,6 @@ public class SnakeHeadController : MonoBehaviour
     }
 
     /// <summary>
-    /// Pixels a collectable if the pixel mode is on.
-    /// </summary>
-    //public void PixelCollectable()
-    //{
-    //    if(pixeled)
-    //    {
-    //        if (gridLinesOn)
-    //            foreach (Transform t in actualGameComponents.GetOrAddEmptyGameObject("collectablesHolder").transform)
-    //                spawnPixeledBlocks.ModifyCollectablePixeledGridLines(t.gameObject);
-    //        else
-    //        { }
-    //    }
-    //}
-
-    /// <summary>
     /// A new snake block is created. It depends on whether gridLines and pixelMode are on how the block will be created. (Pixeled or not)
     /// </summary>
     /// <param name="positionAsRow">The row-position of the new snake block in the world-matrix.</param>
@@ -483,7 +471,7 @@ public class SnakeHeadController : MonoBehaviour
     {
         int length = GetLength();
 
-        if(length >= 2)
+        if(length > 2)
         {
             float randomNumber = Random.value;
 
@@ -532,8 +520,18 @@ public class SnakeHeadController : MonoBehaviour
     {
         int ordinalNumberNewEnd = length - numberOfBlocksToBeRemoved - 1;
         GameObject newEnd = GetBlockWithOrdinalNumber(ordinalNumberNewEnd);
+        GetBlockAndSuccessors(newEnd.GetComponent<SnakeBlockController>().Successor.gameObject);
         newEnd.GetComponent<SnakeBlockController>().Successor = null;
         end = newEnd;
+    }
+
+    /// <summary>
+    /// Returns a snake block and all of its successors.
+    /// </summary>
+    /// <param name="firstSnakeBlock">The first snake block who (and whose successors) should be returned.</param>
+    private List<GameObject> GetBlockAndSuccessors(GameObject firstSnakeBlock)
+    {
+        return GetComponent<SnakeBlockController>().GetBlockAndSuccessors(ObstacleBlocks);
     }
 
     /// <summary>
