@@ -111,11 +111,9 @@ public class SpawnCollectablesSimplified : MonoBehaviour
     /// <param name="occupiedFields"></param>
     private void AddObstaclesToOccupiedFields(bool[,] occupiedFields)
     {
-        print("number of obstacles: " + snakeHead.GetComponent<SnakeHeadController>().ObstacleBlocks.Count);
         foreach (GameObject obstacle in snakeHead.GetComponent<SnakeHeadController>().ObstacleBlocks)
         {
             occupiedFields[obstacle.GetComponent<SnakeBlockController>().GetCurrentRow() - 1, obstacle.GetComponent<SnakeBlockController>().GetCurrentColumn() - 1] = true;
-            print("Obstacle: Row: " + obstacle.GetComponent<SnakeBlockController>().GetCurrentRow() + " Column: " + obstacle.GetComponent<SnakeBlockController>().GetCurrentColumn());
         }
     }
 
