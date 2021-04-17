@@ -1,10 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using System;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
-using UnityEngine.UI;
 
 public class DataSaver : Singleton<DataSaver>
 {
@@ -816,7 +813,9 @@ public class PlayerData
     /// <param name="funModeOn"></param>
     public bool ToggleFunMode(bool funModeOn)
     {
-        return funMode = funModeOn;
+        funMode = funModeOn;
+        DetermineNewDifficulty();
+        return funMode;
     }
 
     /// <summary>
@@ -1199,9 +1198,10 @@ public class PlayerData
         int maxSpeed = 30;
         double boundariesFactor = 1.5;//difficulty factor of activated world boundaries
         double delayedFactor = 1.2; //difficulty factor of activated delayed spawnings
+        double funModeFactor = 1.8; //difficulty factor of fun mode
 
         int minDifficultyScore = minWorldSize * minSpeed;
-        double maxDifficultyScore = maxWorldSize * maxSpeed * boundariesFactor * delayedFactor;
+        double maxDifficultyScore = maxWorldSize * maxSpeed * boundariesFactor * delayedFactor; //the 'max difficulty' is intentionally independent of 'fun mode'
 
         //the required difficulty scores for the different difficulty levels are set:
         double n = maxDifficultyScore / minDifficultyScore;
@@ -1210,17 +1210,11 @@ public class PlayerData
         //the current difficulty score is determined:
         double currentScore = worldSize * speed;
         if (worldBoundaries)
-        {
-            if (delayedSpawnings)
-                currentScore *= boundariesFactor * delayedFactor;
-            else
-                currentScore *= boundariesFactor;
-        }
-        else
-        {
-            if (delayedSpawnings)
-                currentScore *= delayedFactor;
-        }
+            currentScore *= boundariesFactor;
+        if (delayedSpawnings)
+            currentScore *= delayedFactor;
+        if (funMode) //fun mode can increase the difficulty, even though it doesn't have an impact on 'max difficulty' and difficulty level 'ultimate'
+            currentScore *= funModeFactor;
 
         //the difficulty is finally set:
         if (currentScore <= minDifficultyScore * factor)
@@ -1231,9 +1225,16 @@ public class PlayerData
             HighScores.Instance.DifficultyLevel = Difficulty.Medium;
         else if (currentScore <= minDifficultyScore * Math.Pow(factor, 4))
             HighScores.Instance.DifficultyLevel = Difficulty.Hard;
-        else if (currentScore < maxDifficultyScore-1)
-            HighScores.Instance.DifficultyLevel = Difficulty.VeryHard;
         else
-            HighScores.Instance.DifficultyLevel = Difficulty.Ultimate;
+        {
+            //The difficulty level 'ultimate' is independent of the fun mode. Everything else must be maximally difficult.
+            if (funMode)
+                currentScore /= funModeFactor;
+
+            if (currentScore < maxDifficultyScore - 1)
+                HighScores.Instance.DifficultyLevel = Difficulty.VeryHard;
+            else
+                HighScores.Instance.DifficultyLevel = Difficulty.Ultimate;
+        }
     }
 }

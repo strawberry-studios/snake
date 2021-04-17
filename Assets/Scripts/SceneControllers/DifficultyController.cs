@@ -175,6 +175,7 @@ public class DifficultyController : MonoBehaviour
     public void SetFunMode(bool state)
     {
         DataSaver.Instance.SaveFunModeToggleState(state);
+        LoadCurrentDifficulty();
     }
 
     /// <summary>
